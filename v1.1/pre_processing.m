@@ -1,0 +1,527 @@
+function [LFP, EMG, outputPath] = pre_processing(app,CA1_data_import,EMG_data_import,pre_processing_state)
+
+% Change status text
+app.StatusTextArea.Value = 'Running pre-processing step...';
+drawnow % Refresh the interface
+
+%% Get a file to save the variables
+
+% Title to the dialog box
+title = sprintf('Save the processed data. Select a folder for the file:');
+% Default path
+[def_path,~,~] = fileparts(which('RMS_pwelch_integrate'));
+% Selected Output path
+outputPath = uigetdir(def_path,title);
+
+% Get the filepath completely
+filenameLoad_raw_data = fullfile(outputPath,'RAW_DATA');
+filenameLoad_all_data = fullfile(outputPath,'ALL_DATA');
+filenameLoad_data_variables = fullfile(outputPath,'data_variables');
+
+%% Ignores the detrend, filtering, and block separation if it has already
+% been done
+if pre_processing_state  % If it is true, the pre-processing step is going to be executed
+    %% Defining important parameters during the pre_processing step
+    pre_pro_params = struct;    % Contains the parameters used during the pre-processing step
+    % Size of the time windows (time bins in seconds)
+    pre_pro_params.epoch_length = 10;
+    % Sampling frequency after decimate function
+    switch app.Algorithm_preprocessing_step_final_sampling_frequency
+        case 'Default'
+            % EMG
+            pre_pro_params.sampling_frequency_output = 500;   % Default values
+            % LFP
+            pre_pro_params.sampling_frequency_output_LFP = 250;
+        otherwise
+            % EMG
+            pre_pro_params.sampling_frequency_output = app.Algorithm_preprocessing_step_final_sampling_frequency;   % Value chosen by the user
+            % LFP
+            pre_pro_params.sampling_frequency_output_LFP = app.Algorithm_preprocessing_step_final_sampling_frequency;
+    end
+    % Filter parameters
+    pre_pro_params.highcutoff = 300;    % High cutoff
+    pre_pro_params.lowcutoff = 85;  % Low cutoff
+    
+    % Notch parameters ([notch_frequency notch_frequency*2 notch_frequency*3 .... notch_frequency*n]) 
+    pre_pro_params.notch = app.PowerLineNoiseHzEditField.Value:app.PowerLineNoiseHzEditField.Value:EMG_data_import.sampling_frequency/2;
+    notch_frequency_extension = 2;  % It means that the notch will consider a band [-2 <- notch_freq -> +2]
+    
+    % The raw data is stored inside .data
+    
+    %% Select the best output sampling frequency (since the input SF might not be a multiple of 1000 or 500) --> find the nearest
+    
+    if mod(EMG_data_import.sampling_frequency,pre_pro_params.sampling_frequency_output) ~= 0
+        putative_sampling_frequencies = pre_pro_params.sampling_frequency_output:EMG_data_import.sampling_frequency;    %Get the possible sampling frequencies
+        % Get the sampling frequencies which can divide the input sampling
+        % frequency
+        putative_sampling_frequencies = putative_sampling_frequencies(mod(EMG_data_import.sampling_frequency,putative_sampling_frequencies) == 0);
+        % Get the index of the nearest sampling frequency
+        [~,~,idx]=unique(round(abs(putative_sampling_frequencies-pre_pro_params.sampling_frequency_output)),'stable');
+        % Get the new sampling frequency
+        pre_pro_params.sampling_frequency_output = putative_sampling_frequencies(idx==1);
+        pre_pro_params.sampling_frequency_output_LFP = putative_sampling_frequencies(idx==1)/2;
+    end
+    
+    clear idx putative_sampling_frequencies
+    
+    %% Get information about the segmentation (function from RMS_pwelch_integrate)
+    segmentation_info = get_segmentation_info_public(app, length(CA1_data_import.data), CA1_data_import.sampling_frequency);
+    
+    %% 1st Step --> Decimate Divide the raw data in N seconds blocks (save it and then exclude)
+    tic
+    % Blocking Raw Data
+    n=pre_pro_params.epoch_length*CA1_data_import.sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    m=floor(length(CA1_data_import.data)/n);  % Total number of epochs    
+    
+    % LFP
+    RAW_DATA.LFP_raw_data = reshape(CA1_data_import.data',n,m)'; % Reshaping
+    % Saves EMG raw sampling frequency
+    RAW_DATA.LFP_fs_raw =  CA1_data_import.sampling_frequency;    
+    % Save the LFP blocked raw data
+    save(filenameLoad_raw_data,'-struct','RAW_DATA','-v7.3')
+    clear RAW_DATA     
+        
+    % EMG
+    RAW_DATA.EMG_raw_data = reshape(EMG_data_import.data',n,m)'; % Reshaping    
+    % Saves EMG raw sampling frequency
+    RAW_DATA.EMG_fs_raw =  EMG_data_import.sampling_frequency;    
+    % Save the EMG blocked raw data
+    save(filenameLoad_raw_data,'-struct','RAW_DATA','-append')
+    clear RAW_ DATA
+    
+    clear a b i m n
+    toc
+    %% 2nd Step --> Detrend
+    tic
+    % Allocate the variables for LFP and EMG
+    DATA.LFP_hour = nan(segmentation_info.n_segments,segmentation_info.adjusted_var_length/segmentation_info.n_segments);
+    DATA.EMG_hour = nan(segmentation_info.n_segments,segmentation_info.adjusted_var_length/segmentation_info.n_segments);
+    
+    for segments = segmentation_info.segments
+        segment_index = segmentation_info.timestamps(segments,1):segmentation_info.timestamps(segments,2);
+        % LFP - detrend
+        DATA.LFP_hour(segments,:) = detrend(CA1_data_import.data(segment_index),'constant');
+        % EMG - detrend
+        DATA.EMG_hour(segments,:) = detrend(EMG_data_import.data(segment_index),'constant');
+    end
+    
+    % Get the sampling frequency from the raw data before excluding it
+    DATA.LFP_raw_sampling_frequency = CA1_data_import.sampling_frequency;
+    DATA.EMG_raw_sampling_frequency = EMG_data_import.sampling_frequency;
+    
+    % Exclude the raw data
+    clear CA1_data_import EMG_data_import
+    toc
+    %% 3rd Step --> Decimate
+    tic
+    % LFP (CA1)
+    fs_in_out_ratio = DATA.LFP_raw_sampling_frequency/pre_pro_params.sampling_frequency_output_LFP; % Get the input/output ratio for this specific variable
+    % Temporary variable to store the resampled data
+    CA1_processed = nan(segmentation_info.n_segments,ceil(segmentation_info.adjusted_var_length/segmentation_info.n_segments/fs_in_out_ratio));
+    
+    for segments = segmentation_info.segments
+        % LFP - decimate
+        CA1_processed(segments,:) = decimate(DATA.LFP_hour(segments,:),fs_in_out_ratio);  % Decimate function (detrended data)
+    end
+    DATA.LFP_hour = CA1_processed;  % After the decimate
+    clear CA1_processed
+    DATA.LFP_processed_sampling_frequency = pre_pro_params.sampling_frequency_output_LFP; % Get the new sampling frequency
+    LFP.FS = DATA.LFP_processed_sampling_frequency; % Insert the new sampling frequency inside data_variables
+    
+    % EMG
+    fs_in_out_ratio = DATA.EMG_raw_sampling_frequency/pre_pro_params.sampling_frequency_output; % Get the input/output ratio for this specific variable
+    % Temporary variable to store the resampled data
+    EMG_processed = nan(segmentation_info.n_segments,ceil(segmentation_info.adjusted_var_length/segmentation_info.n_segments/fs_in_out_ratio));
+    
+    for segments = segmentation_info.segments
+        % EMG - decimate
+        EMG_processed(segments,:) = decimate(DATA.EMG_hour(segments,:),fs_in_out_ratio);  % Decimate function (detrended data)
+    end
+    DATA.EMG_hour = EMG_processed;  % After the decimate
+    clear EMG_processed
+    DATA.EMG_processed_sampling_frequency = pre_pro_params.sampling_frequency_output; % Get the new sampling frequency
+    EMG.FS = DATA.EMG_processed_sampling_frequency; % Insert the new sampling frequency inside data_variables
+    
+    toc
+    %% 4th step --> Filtering EMG
+    tic
+    % Make sure that it is a row vector
+    if isrow(DATA.EMG_hour(1,:))
+        % Good to go!
+    else
+        DATA.EMG_hour = DATA.EMG_hour';  % Invert the dimensions
+    end
+    
+    % Check if the high cutoff obeys nquist limit
+    if pre_pro_params.highcutoff >=  DATA.EMG_processed_sampling_frequency/2
+        pre_pro_params.highcutoff = 200;
+    end
+    
+    % Create the filter (Butter 2nd order)
+    fs = DATA.EMG_processed_sampling_frequency; % sampling_frequency
+    n = 2; % filt order
+    nyquist_rate = fs/2;
+    Wn = [pre_pro_params.lowcutoff pre_pro_params.highcutoff]/nyquist_rate;  % Lower and Upper frequency limits
+    ftype = 'bandpass'; % filter type
+    [b,a] = butter(n,Wn,ftype); % Create the butter filter
+    
+    % Filtering data
+    DATA.EMG_hour = filter(b,a,DATA.EMG_hour,[],2);
+    
+     %     for segments = segmentation_info.segments
+    %         % Filter function (eegfilt)
+    %         DATA.EMG_hour(segments,:) = eegfilt2(DATA.EMG_hour(segments,:),DATA.EMG_processed_sampling_frequency,pre_pro_params.lowcutoff,[]);
+    %         DATA.EMG_hour(segments,:) = eegfilt2(DATA.EMG_hour(segments,:),DATA.EMG_processed_sampling_frequency,[],pre_pro_params.highcutoff);
+    %     end
+    toc
+    
+    %% 5th Step -> Notch
+    disp('notch')
+    tic
+    % Loop for each of the harmonics
+    for harm = 1:length(pre_pro_params.notch)
+        
+        % Check if the notch frequency is lower than half the sampling
+        % frequency
+        if pre_pro_params.notch(harm)+notch_frequency_extension < DATA.EMG_processed_sampling_frequency/2
+            % EMG
+            % Create the filter (Butter 2nd order)
+            fs = DATA.EMG_processed_sampling_frequency; % sampling_frequency
+            n = 2; % filt order
+            nyquist_rate = fs/2;
+            Wn = [pre_pro_params.notch(harm)-notch_frequency_extension pre_pro_params.notch(harm)+notch_frequency_extension]/nyquist_rate;  % Lower and Upper frequency limits
+            ftype = 'stop'; % filter type
+            [b,a] = butter(n,Wn,ftype); % Create the butter filter
+            
+            % Filtering EMG data
+            DATA.EMG_hour = filter(b,a,DATA.EMG_hour,[],2);
+        end
+        
+%         % LFP
+%         % Check if the notch frequency is lower than half the sampling
+%         % frequency
+%         if pre_pro_params.notch(harm)+notch_frequency_extension < DATA.LFP_processed_sampling_frequency/2
+%             
+%             % Create the filter (Butter 2nd order)
+%             fs = DATA.LFP_processed_sampling_frequency; % sampling_frequency
+%             n = 2; % filt order
+%             nyquist_rate = fs/2;
+%             Wn = [pre_pro_params.notch(harm)-notch_frequency_extension pre_pro_params.notch(harm)+notch_frequency_extension]/nyquist_rate;  % Lower and Upper frequency limits
+%             ftype = 'stop'; % filter type
+%             [b,a] = butter(n,Wn,ftype); % Create the butter filter
+%             
+%             % Filtering LFP data
+%             DATA.LFP_hour = filter(b,a,DATA.LFP_hour,[],2);
+%         end        
+    end
+    toc
+   
+    %% 6th --> Blocking Filtered Data
+    tic
+    n=pre_pro_params.epoch_length*DATA.LFP_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    
+    % Number of blocks in each segment
+    n_blocks_each_segment = floor(size(DATA.LFP_hour,2) / n);
+    % LFP
+    DATA.LFP_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix (N blocks in each segment * N of segments)
+    segment_counter = 0;
+    for segments = segmentation_info.segments % Segments loop
+        for i = 1:n_blocks_each_segment  % Blocks loop
+            a = 1+(i-1)*n;
+            b = i*n;
+            DATA.LFP_epochs(i+segment_counter,:) = DATA.LFP_hour(segments,a:b);
+        end
+        segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
+    end
+    % Exclude extra NaN values
+    DATA.LFP_epochs(isnan(DATA.LFP_epochs(:,1)),:) = [];
+    DATA = rmfield(DATA,'LFP_hour');  % Remove the field LFP_epochs
+    
+    % EMG
+    n=pre_pro_params.epoch_length*DATA.EMG_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    % Number of blocks in each segment
+    n_blocks_each_segment = floor(size(DATA.EMG_hour,2) / n);
+    % EMG
+    DATA.EMG_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix
+    segment_counter = 0;
+    for segments = segmentation_info.segments % Segments loop
+        for i = 1:n_blocks_each_segment  % Blocks loop
+            a = 1+(i-1)*n;
+            b = i*n;
+            DATA.EMG_epochs(i+segment_counter,:) = DATA.EMG_hour(segments,a:b);
+        end
+        segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
+    end
+    % Exclude extra NaN values
+    DATA.EMG_epochs(isnan(DATA.EMG_epochs(:,1)),:) = [];
+    DATA = rmfield(DATA,'EMG_hour');  % Remove the field LFP_epochs
+    
+    clear a b i m n segment_counter n_blocks_each_segment
+    toc
+else % If the pre processing step has already been done before
+    
+    % Check if the data has been pre-processed by the alternative
+    % pre-processing step
+    if ~isfield(CA1_data_import,'epoch_length')
+        
+        row = sprintf('Row: %d',size(CA1_data_import.data,1));  % Text corresponding to row
+        column = sprintf('Column: %d',size(CA1_data_import.data,2));    % Text corresponding to column
+        
+        fig_dlg = app.SleepwakecycleclassificationsoftwareUIFigure; % Handle of the figure (it's the app figurer itself)
+        msg = 'Which dimension corresponds to the number of epochs ?';   % Message that will apper on the new dialog box
+        title = 'Epochs dimension'; % Title
+        selection = uiconfirm(fig_dlg,msg,title,...
+            'Options',{row,column,'Cancel'},...
+            'DefaultOption',1,'CancelOption',3); % Create the dialog box with the question to either close or not the window
+        switch selection
+            case row
+                % Good to go!
+            case column
+                CA1_data_import.data = CA1_data_import.data'; % Transpose
+                EMG_data_import.data = EMG_data_import.data'; % Transpose
+            case 'Cancel' % Do not do anything (keeps the app window as it is)
+                return % Stops the function
+        end
+        
+        % Get the epoch lenght value
+        CA1_data_import.epoch_length = size(CA1_data_import.data,2)/CA1_data_import.sampling_frequency; % Insert the epoch length value
+        EMG_data_import.epoch_length = size(EMG_data_import.data,2)/EMG_data_import.sampling_frequency; % Insert the epoch length value
+    end
+    
+    pre_pro_params = struct;    % Contains the parameters used during the pre-processing step
+    % Size of the time windows (time bins in seconds)
+    pre_pro_params.epoch_length = CA1_data_import.epoch_length;
+    % Sampling frequency after decimate function
+    pre_pro_params.sampling_frequency_output_LFP = CA1_data_import.sampling_frequency;
+    
+    % Check if the data has been pre-processed by the alternative
+    % pre-processing step and has the field filter_params
+    if isfield(EMG_data_import,'filter_params')
+        % Filter parameters
+        pre_pro_params.highcutoff = EMG_data_import.filter_params.high;    % High cutoff
+        pre_pro_params.lowcutoff = EMG_data_import.filter_params.low;  % Low cutoff
+    end
+    
+    % Import EMG data
+    RAW_DATA.EMG_raw_data = EMG_data_import.data;
+    
+    % Save the EMG blocked raw data
+    save(filenameLoad_raw_data,'-struct','RAW_DATA','-v7.3')
+    clear RAW_DATA
+    
+    DATA.EMG_epochs = EMG_data_import.data;
+    DATA.EMG_processed_sampling_frequency = EMG_data_import.sampling_frequency;
+    % Saves EMG raw sampling frequency
+    EMG.FS_raw =  EMG_data_import.sampling_frequency;
+    EMG.FS = EMG_data_import.sampling_frequency;
+    % Clear EMG imported data
+    clear EMG_data_import
+    
+    % Import CA1 data
+    RAW_DATA.LFP_raw_data = CA1_data_import.data;
+    
+    % Save the EMG blocked raw data
+    save(filenameLoad_raw_data,'-struct','RAW_DATA','-append')
+    clear RAW_DATA
+    
+    %     fields = {'LFP_raw_data'};
+    %     DATA = rmfield(DATA,fields);
+    %     clear fields
+    
+    DATA.LFP_epochs = CA1_data_import.data;
+    DATA.LFP_processed_sampling_frequency = CA1_data_import.sampling_frequency;
+    % Saves LFP raw sampling frequency
+    LFP.FS_raw = CA1_data_import.sampling_frequency;
+    LFP.FS = CA1_data_import.sampling_frequency;
+    % Clear LFP imported data
+    clear CA1_data_import
+    
+end
+
+%% Extracting RMS From EMG
+tic
+% Extracting the block's EMG's RMS
+EMG.RMS = rms(DATA.EMG_epochs,2)';
+
+% Struct "EMG" will contain the EMG signal processed
+EMG.tb = pre_pro_params.epoch_length;
+
+% Save EMG structs (RMS, FS, etc.)
+save(filenameLoad_data_variables,'EMG')
+toc
+%% Blocks with artifacts (only inserts NaN on EMG, since the complete data is important for the LFP pwelch)
+tic
+artifact_idx = false(size(DATA.LFP_epochs,1),1);
+for i=1:size(DATA.LFP_epochs,1)     % Each single block
+    % Filtering data
+    lowcutoff=2;
+    
+    % Create the filter (Butter 2nd order)
+    fs = DATA.EMG_processed_sampling_frequency; % sampling_frequency
+    n = 2; % filt order
+    nyquist_rate = fs/2;
+    Wn = lowcutoff/nyquist_rate;  % Lower and Upper frequency limits
+    ftype = 'low'; % filter type
+    [b,a] = butter(n,Wn,ftype); % Create the butter filter
+    
+    % Filtering data
+    artifact_block = filter(b,a,DATA.LFP_epochs(i,:),[],2);
+    
+    % Time windows with amplitude higher than 10SD are excluded(=NaN)
+    z_art_block=zscore(artifact_block);
+    artifact_block=find(z_art_block > 10 | z_art_block < -10, 1);
+    if ~isempty(artifact_block)     % If there is any sample above or below the threshold
+        DATA.EMG_epochs(i,:)=NaN;
+        artifact_idx(i) = true;    % Get the indices from the periods with artifacts
+    end
+end
+
+% Save the EMG blocked raw data
+save(filenameLoad_all_data,'-struct','DATA','-v7.3')
+DATA = rmfield(DATA,'EMG_epochs');  % Remove the field EMG_epochs
+
+clear lowcutoff artifact_block z_art_block
+toc
+%% Extracting the block's FFT (LFP)
+tic
+% Pre-allocating the final normalized PSD matrix (rows = number of blocks;
+% columns = number of discrete frequencies)
+LFP.Power_normalized = nan(size(DATA.LFP_epochs,1),DATA.LFP_processed_sampling_frequency * pre_pro_params.epoch_length + 1);
+
+% Pre-allocating the band power struct
+LFP.Frequency_bands.Delta = nan(1,size(DATA.LFP_epochs,1));
+LFP.Frequency_bands.Beta = nan(1,size(DATA.LFP_epochs,1));
+LFP.Frequency_bands.Theta = nan(1,size(DATA.LFP_epochs,1));
+LFP.Frequency_bands.Low_Gamma = nan(1,size(DATA.LFP_epochs,1));
+LFP.Frequency_bands.High_Gamma = nan(1,size(DATA.LFP_epochs,1));
+
+for i=1:size(DATA.LFP_epochs,1)
+    size_LFP_block = DATA.LFP_processed_sampling_frequency * pre_pro_params.epoch_length; % 10 s epoch
+    W = DATA.LFP_processed_sampling_frequency / 2; % Window size for pwelch (this can be adjusted empirically untill the desired frequency resolution is reached)
+    NFFT=2*(size_LFP_block); % specifies the number of discrete Fourier transform (DFT)
+    
+    % Computing FFT with "pwelch" function
+    [Pxx,auxF] = pwelch(DATA.LFP_epochs(i,:),W,0,NFFT,DATA.LFP_processed_sampling_frequency);
+    
+    % Frequencies from 1 up to 1000Hz will be used for normalization
+    F=auxF(auxF <= 500);
+    
+    % Use an auxiliar variable to hold the Pxx value
+    auxP=Pxx;
+    
+    % Excluding line noise according to the user selection
+    % (app.PowerLineNoiseHzEditField.Value)
+    for nn = 1:length(pre_pro_params.notch) % Loop for each noise frequency (main and harmonics)
+        notch = (F >= pre_pro_params.notch(nn)-notch_frequency_extension & ...
+            F <= pre_pro_params.notch(nn)+notch_frequency_extension);
+        % Exclude the noise frequencies from the total (only for
+        % normalization)
+        auxP(notch)=NaN;
+    end
+    
+    % Normalizating Power spectrum distribution
+    A_norm=Pxx./nansum(auxP);
+    LFP.Power_normalized(i,:)=A_norm;
+    
+    % Restricting the frequency range up to 200Hz
+    Freq_idx=find(F<200);
+    Freq=F;
+    
+    clear size_LFP_block W NFFT aux* notch Pxx Fidx F
+    
+    %% Defining frequency bands
+    % band1='Delta (1 to 4Hz)';
+    fo1=1;
+    fi1=4;
+    
+    % band2='Beta (10 to 30Hz)';
+    fo2=10;
+    fi2=30;
+    
+    % band3='Theta (6 to 10Hz)';
+    fo3=6;
+    fi3=10;
+    
+    % band4='Low Gamma (30 to 50Hz)';
+    fo4=30;
+    fi4=50;
+    
+    % band5='High Gamma (60 to 90Hz)';
+    fo5=60;
+    fi5=90;
+    
+    %% Computing frequency bands excluding the noise frequencies
+    
+    notch_freq = (Freq>=pre_pro_params.notch(1)-notch_frequency_extension & Freq<=pre_pro_params.notch(1)+notch_frequency_extension);
+    
+    x1=find((Freq>=fo1 & Freq<=fi1) & ~notch_freq);
+    LFP.Frequency_bands.Delta(i) = sum(A_norm(x1(1):x1(end)),1);
+    
+    x2=find((Freq>=fo2 & Freq<=fi2) & ~notch_freq);
+    LFP.Frequency_bands.Beta(i) = sum(A_norm(x2(1):x2(end)),1);
+    
+    x3=find((Freq>=fo3 & Freq<=fi3) & ~notch_freq);
+    LFP.Frequency_bands.Theta(i) = sum(A_norm(x3(1):x3(end)),1);
+    
+    x4=find((Freq>=fo4 & Freq<=fi4) & ~notch_freq);
+    LFP.Frequency_bands.Low_Gamma(i) = sum(A_norm(x4(1):x4(end)),1);
+    
+    x5=find((Freq>=fo5 & Freq<=fi5) & ~notch_freq);
+    LFP.Frequency_bands.High_Gamma(i) = sum(A_norm(x5(1):x5(end)),1);
+    
+    clear f0* fi1 fi2 fi3 fi4 fi5 x* A_norm
+    
+    %     %% Blocks with arctifacts = NaN:
+    %
+    %     % Filtering data
+    %     lowcutoff=100;
+    %
+    %     % Create the filter (Butter 2nd order)
+    %     fs = DATA.EMG_processed_sampling_frequency; % sampling_frequency
+    %     n = 2; % filt order
+    %     nyquist_rate = fs/2;
+    %     Wn = lowcutoff/nyquist_rate;  % Lower and Upper frequency limits
+    %     ftype = 'high'; % filter type
+    %     [b,a] = butter(n,Wn,ftype); % Create the butter filter
+    %
+    %     % Filtering data
+    %     artifact_block = filter(b,a,DATA.LFP_epochs(i,:),[],2);
+    %
+    %     % Time windows with amplitude higher than 10SD are excluded(=NaN)
+    %     z_art_block=zscore(artifact_block);
+    %     artifact_block=find(z_art_block > 10 | z_art_block < -10, 1);
+    %     if isempty(artifact_block)==0
+    %         DATA.LFP_epochs(i,:)=NaN;
+    %         DATA.EMG_epochs(i,:)=NaN;
+    %     end
+    
+    
+end
+toc
+
+% Excluded the artifact periods from the LFP
+DATA.LFP_epochs(artifact_idx,:) = NaN;
+
+% Save the final DATA struct fields (epochs)
+save(filenameLoad_all_data,'-struct','DATA','-append')
+clear DATA
+
+%% Final fields for LFP struct
+LFP.Frequency_distribution=Freq;
+LFP.Frequency_index=Freq_idx;
+LFP.tb = pre_pro_params.epoch_length;
+
+clearvars -except LFP EMG DATA pre_pro_params filenameLoad_data_variables outputPath
+clc
+
+%% Saving the processed data
+
+% Change status text
+app.StatusTextArea.Value = 'Saving pre-processed files...';
+drawnow % Refresh the interface
+
+% Get time information to be stored along with the processed data
+time_info = datetime;
+save(filenameLoad_data_variables,'LFP','pre_pro_params','time_info','-append')
+
+end
