@@ -11,7 +11,7 @@ if isfile(data_full_path)
     % Check if the data was saved using the struct mode
     listOfVariables = who('-file', data_full_path); % Get the list of variables inside it
     if ismember('LFP_epochs', listOfVariables) % Check if it has any of fields saved as variables
-        DATA = load(data_full_path,'LFP_epochs','EMG_epochs');    % Load only the necessary fields (only when save with the -struct option)
+        DATA = load(data_full_path,'LFP_epochs','EMG_epochs','EMG_processed_sampling_frequency');    % Load only the necessary fields (only when save with the -struct option)
     else
         load(data_full_path,'DATA') % Default load (Slower)
         % Remove the extra fields
@@ -145,15 +145,16 @@ clear f1 aux*
 % Check if the artifact vector is empty (no artifacts were detected) or not
 if ~isempty(artifact.LFP_epoch)
     
-    time=(1:1:size(DATA.LFP_epochs,2))./LFP.FS;
-    plot_epochs=artifact.LFP_epoch(randi(size(artifact.LFP_epoch,2)));    
+    time1=(1:1:size(DATA.LFP_epochs,2))./LFP.FS;
+    time2=(1:1:size(DATA.EMG_epochs,2))./DATA.EMG_processed_sampling_frequency;
+    plot_epochs=artifact.LFP_epoch(randi(length(artifact.LFP_epoch)));    
     
     epoch_psd=LFP.Power_normalized(plot_epochs,figure_paramenters.Fidx);
     epoch_psd(figure_paramenters.exclude)=nan;
     
     fig=figure('PaperSize', [21 29.7],'visible','off');
     subplot(4,2,[1 2])
-    plot(time,DATA.LFP_epochs(plot_epochs,:),'Color',figure_paramenters.color.LFP);
+    plot(time1,DATA.LFP_epochs(plot_epochs,:),'Color',figure_paramenters.color.LFP);
     hold on
     yline(artifact.threshold_lfp*artifact.LFP_epoch_std(plot_epochs))
     yline(-artifact.threshold_lfp*artifact.LFP_epoch_std(plot_epochs))
@@ -172,7 +173,7 @@ if ~isempty(artifact.LFP_epoch)
     legend box off
     
     subplot(4,2,[3 4])
-    plot(time,DATA.EMG_epochs(plot_epochs,:),'Color',[0.6350 0.0780 0.1840]);
+    plot(time2,DATA.EMG_epochs(plot_epochs,:),'Color',[0.6350 0.0780 0.1840]);
     ylim([-2 2])
     yticks(-2:2)
     ylabel({'EMG','(Amplitude)'})
