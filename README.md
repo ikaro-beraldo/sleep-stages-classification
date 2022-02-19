@@ -49,7 +49,7 @@ Our algorithm uses a combination of recordings: (1) CA1 local field potentials a
 4. In the _Sleep-wake cycle sorting_ panel, select the option _1 - Use workspace data_
    - Select the CA1 LFP vector on the _CA1 Channel List Box_
    - If you are using an EMG recording, select the option _EMG_ and select the corresponding vector on the _EMG/Accel Channel list box_
-   - If you are using a single accelerometer recording, select the option _Accel 1_and select the corresponding vector on the _EMG/Accel Channel list box_
+   - If you are using a single accelerometer recording, select the option _Accel 1_ and select the corresponding vector on the _EMG/Accel Channel list box_
    - If you are using a 3 channel accelerometer recording, select the option _Accel 3_ and select each one of the accelerometer vectors on the list boxes _X_, _Y_, and _Z_
 5. Check the box _Include the algorithm pre-processing step_
 6. Define the _Power Line Noise_ frequency, the _Epoch Length_, and the _Output Sampling Frequency_
