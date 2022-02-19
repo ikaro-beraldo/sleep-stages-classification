@@ -63,7 +63,7 @@ __Recording Interface__
 5. Check the option _Save some representative epochs_ if you want to save representative epochs for each state
 6. Check the option _Start from the last step completed_ if you are resuming a classification
 7. Check the option _Classify the transitions between NREM and REM_ if you want to classify part of the epochs as transitions
-8. Check the option _Use a training dataset_ to use a training dataset when the GMM starts running
+8. Check the option _Use a training dataset_ to use a training dataset when the GMM starts running (It is recommended to check this option)
 
 A new window will be opened
 
@@ -72,3 +72,37 @@ _____ Interface de selecionar banda _____
 It is possible to add another frequency band to process of clustering carried out by the GMM algorithm. However the default option _None_ is encouraged. You can press the button _Open PDF files_ to check the EMG RMS and Theta/Delta ratio values for the epochs of this specific recording.
 
 9. Press the button _OK_
+
+#### Selection of preliminary clusters
+
+If you have not checked the option to use a training dataset, you will be shown a new window. The preliminary clusters will be marked in red.
+
+____Preliminary clusters_____
+
+1. Press 'Run Again' until an suitable set of clusters is shown
+2. Press 'OK' to confirm the preliminary clusters formed
+
+#### Manual inspection of epochs
+
+If the you have checked the option to run the visual inspection, a new window will be opened. You will have to label a specific number of epochs for each state in order to processed with the classification.
+
+____Visual inspection_______
+
+* Press one of the following buttons to label the epoch shown:
+  1. AWAKE: the epoch is classified as an AWAKE period
+  2. NREM: the epoch is classified as a NREM sleep period
+  3. REM: the epoch is classified as a REM sleep period
+  4. Transitions: the epoch is classified as one the transitions
+  5. None: the epoch is not labeled
+
+After the specified number of epochs has been classified, the classification algorithm will be resumed.
+  
+#### Finishing the classification
+
+After all the steps have been completed, the classification will be finished. Check the __Output Path__ defined previously for the results. All the figures produced during the process and MAT files recarding the classification will be stored there. 
+
+Look for the variable 'GMM.All_Sort' inside the 'GMM_Classification.mat' file. It contains the classification coding for the epochs of the recording:
+- 1: REM
+- 2: NREM
+- 3: AWAKE
+- -1: Excluded epochs (artifacts)
