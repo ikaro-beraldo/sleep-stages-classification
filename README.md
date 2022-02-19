@@ -16,7 +16,7 @@ Run the following command on MATLAB's command window:
 
 The primary window will be opened
 
-___ Interface Image ____
+![Main windown](/assets/Toolbox images/Main_interface.png)
 
 ## Pre-processing step
 
