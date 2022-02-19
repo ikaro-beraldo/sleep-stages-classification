@@ -16,7 +16,7 @@ Run the following command on MATLAB's command window:
 
 The primary window will be opened
 
-![Main window](/assets/Toolbox_images/Main_interface.png)
+![Main window](/Toolbox_images/Main_interface.png)
 
 ## Pre-processing step
 
@@ -27,7 +27,7 @@ Our algorithm uses a combination of recordings: (1) CA1 local field potentials a
 1. Click on the _Load button_ and a file selection window will be opened
 2. Select the MAT file containing the recordings and a second window will be opened
 
-___ Load Interface ____
+![Main window](/Toolbox_images/Load_interface.png)
 
 3. Select which vectors are going to be loaded and the sampling frequency associated with them
 4. In the _Sleep-wake cycle sorting_ panel, select the option _1 - Use workspace data_
@@ -52,7 +52,7 @@ If a dataset has already been pre-processed or you want to resume/restart a clas
 
 After the loading and pre-processing steps a new window will be opened
 
-__Recording Interface__
+![Main window](/Toolbox_images/Recording_parameters.png)
 
 #### Defining some classification parameters
 
@@ -67,7 +67,7 @@ __Recording Interface__
 
 A new window will be opened
 
-_____ Interface de selecionar banda _____
+![Main window](/Toolbox_images/Add_bands.png)
 
 It is possible to add another frequency band to process of clustering carried out by the GMM algorithm. However the default option _None_ is encouraged. You can press the button _Open PDF files_ to check the EMG RMS and Theta/Delta ratio values for the epochs of this specific recording.
 
@@ -77,7 +77,7 @@ It is possible to add another frequency band to process of clustering carried ou
 
 If you have not checked the option to use a training dataset, you will be shown a new window. The preliminary clusters will be marked in red.
 
-____Preliminary clusters_____
+![Main window](/Toolbox_images/Gmm_clustering.png)
 
 1. Press 'Run Again' until an suitable set of clusters is shown
 2. Press 'OK' to confirm the preliminary clusters formed
@@ -86,7 +86,7 @@ ____Preliminary clusters_____
 
 If the you have checked the option to run the visual inspection, a new window will be opened. You will have to label a specific number of epochs for each state in order to processed with the classification.
 
-____Visual inspection_______
+![Main window](/Toolbox_images/Visual_Inspection.png)
 
 * Press one of the following buttons to label the epoch shown:
   1. AWAKE: the epoch is classified as an AWAKE period
