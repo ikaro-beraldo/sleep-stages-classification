@@ -1,15 +1,31 @@
 # Sleep-Wake Cycle Classification Toolbox
-MatLab language toolbox for classification of sleep-wake cycle
+
+The toolbox was implemented in MATLAB and the graphical interface was developed on MATLAB's App Designer. The codes were developed using as input data local field potential recordings from CA1 and electromyographic recordings (EMG) of mice and rats. The algorithm separates the recordings in epochs of 10 seconds, extracts the Theta/Delta ratio from the CA1, and computes the RMS from the EMG recording. Both elements are inputs to a trained Gaussian Mixture Model algorithm, which computes the posterior probability of each epoch regarding each one of the three possible clusters. Later, the algorithm uses the visual inspection executed by the user to select the best posterior probability threshold for each state.
 
 # Installation
+
+## Prerequisites and basic information
+
+Our software was implemented on MATLAB 2020b on Windows 10. Consequently, the execution of some of the routines may present errors when running in MATLAB later versions or on different operational systems.
+
+Necessary MATLAB Packages:
+- MATLAB 9.9
+- Signal Processing Toolbox 8.5
+- Statistics and Machine Learning Toolbox 12.0
+- Curve Fitting Toolbox 3.5.12
+
+It is possible to download them separately on https://www.mathworks.com/help/matlab/matlab_env/get-add-ons.html
+
+## Installation itself
+
 1 - Download all the files from the master branch;
 
-2 - Add all scripts, functions and variable files on MATLAB's 'Search Path' 
+2 - Add all scripts, functions, and variable files on MATLAB's 'Search Path' 
 (More details: https://www.mathworks.com/help/matlab/matlab_env/add-remove-or-reorder-folders-on-the-search-path.html);
 
 # Usage
 
-For a complete a tutorial, check the file **Sleep-Wake Cycle Classification Toolbox Tutorial.pdf**
+For a complete tutorial, check the file **Sleep-Wake Cycle Classification Toolbox Tutorial.pdf**
 
 Run the following command on MATLAB's command window:
 `RMS_pwelch_integrate`
@@ -34,12 +50,12 @@ Our algorithm uses a combination of recordings: (1) CA1 local field potentials a
    - Select the CA1 LFP vector on the _CA1 Channel List Box_
    - If you are using an EMG recording, select the option _EMG_ and select the corresponding vector on the _EMG/Accel Channel list box_
    - If you are using a single accelerometer recording, select the option _Accel 1_and select the corresponding vector on the _EMG/Accel Channel list box_
-   - If you are using a 3 channel accelerometer recording, select the option _Accel 3_ and select each one of the accelerometer vector on the list boxes _X_, _Y_ and _Z_
+   - If you are using a 3 channel accelerometer recording, select the option _Accel 3_ and select each one of the accelerometer vectors on the list boxes _X_, _Y_, and _Z_
 5. Check the box _Include the algorithm pre-processing step_
 6. Define the _Power Line Noise_ frequency, the _Epoch Length_, and the _Output Sampling Frequency_
 7. Press _Run_
   
-#### 2 - Using a data already pre-processed by the toolbox
+#### 2 - Using a dataset already pre-processed by the toolbox
 If a dataset has already been pre-processed or you want to resume/restart a classification
 
 1. In the _Sleep-wake cycle sorting_ panel, select the option _2 - Load pre-processed variables_
@@ -69,7 +85,7 @@ A new window will be opened
 
 ![Main window](/Toolbox_images/Add_bands.png)
 
-It is possible to add another frequency band to process of clustering carried out by the GMM algorithm. However the default option _None_ is encouraged. You can press the button _Open PDF files_ to check the EMG RMS and Theta/Delta ratio values for the epochs of this specific recording.
+It is possible to add another frequency band to the process of clustering, carried out by the GMM algorithm. However, the default option _None_ is encouraged. You can press the button _Open PDF files_ to check the EMG RMS and Theta/Delta ratio values for the epochs of this specific recording.
 
 9. Press the button _OK_
 
@@ -79,12 +95,12 @@ If you have not checked the option to use a training dataset, you will be shown 
 
 ![Main window](/Toolbox_images/Gmm_clustering.png)
 
-1. Press 'Run Again' until an suitable set of clusters is shown
+1. Press 'Run Again' until a suitable set of clusters is shown
 2. Press 'OK' to confirm the preliminary clusters formed
 
 #### Manual inspection of epochs
 
-If the you have checked the option to run the visual inspection, a new window will be opened. You will have to label a specific number of epochs for each state in order to processed with the classification.
+If you have checked the option to run the visual inspection, a new window will be opened. You will have to label a specific number of epochs for each state to proceed with the classification.
 
 ![Main window](/Toolbox_images/Visual_Inspection.png)
 
@@ -92,14 +108,14 @@ If the you have checked the option to run the visual inspection, a new window wi
   1. AWAKE: the epoch is classified as an AWAKE period
   2. NREM: the epoch is classified as a NREM sleep period
   3. REM: the epoch is classified as a REM sleep period
-  4. Transitions: the epoch is classified as one the transitions
+  4. Transitions: the epoch is classified as one of the transitions
   5. None: the epoch is not labeled
 
 After the specified number of epochs has been classified, the classification algorithm will be resumed.
   
 #### Finishing the classification
 
-After all the steps have been completed, the classification will be finished. Check the __Output Path__ defined previously for the results. All the figures produced during the process and MAT files recarding the classification will be stored there. 
+After all the steps have been completed, the classification will be finished. Check the __Output Path__ defined previously for the results. All the figures produced during the process and MAT files regarding the classification will be stored there. 
 
 Look for the variable 'GMM.All_Sort' inside the 'GMM_Classification.mat' file. It contains the classification coding for the epochs of the recording:
 - 1: REM
