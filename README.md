@@ -25,7 +25,7 @@ It is possible to download them separately on https://www.mathworks.com/help/mat
 
 # Usage
 
-For a complete tutorial, check the file **Sleep-Wake Cycle Classification Toolbox Tutorial.pdf**
+For a complete tutorial, check the file [Sleep-Wake Cycle Classification Toolbox Tutorial](/Sleep-Wake Cycle Classification Toolbox Tutorial.pdf)
 
 Run the following command on MATLAB's command window:
 `RMS_pwelch_integrate`
