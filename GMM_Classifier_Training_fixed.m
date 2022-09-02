@@ -1349,25 +1349,25 @@ if (check_point_info.status && ~check_point_info.run_trained_gmm) || ~check_poin
     % Running the GMM with the epochs excluded
     artifact.data_combined_artifact_free=[artifact.x_artifact_free' artifact.y_artifact_free'];
     
-    % Change the distribution to match the training data distribution
-    difference_theta_delta = nanmedian(Training_data.LFP_used) - nanmedian(artifact.y_artifact_free);
-    difference_emg = nanmedian(Training_data.EMG_used) - nanmedian(artifact.x_artifact_free);
-    
-    % Data
-    artifact.data_combined_artifact_free(:,1) = artifact.data_combined_artifact_free(:,1) + difference_emg;
-    artifact.data_combined_artifact_free(:,2) = artifact.data_combined_artifact_free(:,2) + difference_theta_delta;
-     
+%     % Change the distribution to match the training data distribution
+%     difference_theta_delta = nanmedian(Training_data.LFP_used) - nanmedian(artifact.y_artifact_free);
+%     difference_emg = nanmedian(Training_data.EMG_used) - nanmedian(artifact.x_artifact_free);
+%     
+%     % Data
+%     artifact.data_combined_artifact_free(:,1) = artifact.data_combined_artifact_free(:,1) + difference_emg;
+%     artifact.data_combined_artifact_free(:,2) = artifact.data_combined_artifact_free(:,2) + difference_theta_delta;
+%      
       
     % Check if the user enabled the GMM training 
     if app.Algorithm_params.training_dataset    % If it is enabled
         % Fitting trained data
-        [artifact.GMM.Prob.All,artifact.GMM.nlogL,threshold_pos_prob,succeeded] = trained_GMM_function(artifact.data_combined_artifact_free,number_clusters,Training_data.Trained_GMM);
+        [artifact.GMM.Prob.All,artifact.GMM.nlogL,threshold_pos_prob,succeeded] = trained_GMM_function(artifact.data_combined_artifact_free,number_clusters,Training_data.Trained_GMM,Training_data.LFP_used,Training_data.EMG_used,app.Algorithm_params.missing_state);
 
     else                                        % If it is disabled (without training dataset
         % Get the label info to be used in the plots
         labels_info.xlabel = figure_parameters.emg_accel;
         labels_info.ylabel = label_y;
-        [artifact.GMM.Prob.All,artifact.GMM.nlogL,threshold_pos_prob,succeeded] = untrained_GMM_function(artifact.data_combined_artifact_free,number_clusters,labels_info);
+        [artifact.GMM.Prob.All,artifact.GMM.nlogL,threshold_pos_prob,succeeded] = untrained_GMM_function(artifact.data_combined_artifact_free,number_clusters,labels_info,app.Algorithm_params.missing_state);
     end
     
     % After the GMM_function has finished check if it was NOT succeeded and warn
@@ -1472,6 +1472,10 @@ if (check_point_info.status && ~check_point_info.run_trained_gmm) || ~check_poin
     GMM.Prob.All = artifact.GMM.Prob.All;
     GMM.nlogL = artifact.GMM.nlogL;
     
+    % Change the number of clusters
+    if app.Algorithm_params.missing_state
+        number_clusters = number_clusters - 1;
+    end
     % Function to add the missing period (artifacts) in GMM posterior
     % probability matrix as zeros (0)
     GMM = fix_gmm_artifacts(GMM,artifact,x,number_clusters);
@@ -1480,7 +1484,7 @@ if (check_point_info.status && ~check_point_info.run_trained_gmm) || ~check_poin
     
     % Update the check and save it
     check_point_info.run_trained_gmm = true;
-    save(fullfile(outputPath,'GMM_Classification.mat'),'GMM','check_point_info','artifact','-append')
+    save(fullfile(outputPath,'GMM_Classification.mat'),'GMM','check_point_info','artifact','threshold_pos_prob','-append')
     
     %     save(fullfile(outputPath,'GMM_Classification.mat'),'GMM','threshold_pos_prob','check_point_info','artifact','-append')
     
@@ -1688,31 +1692,76 @@ if (check_point_info.status && ~check_point_info.clusters_states) || ~check_poin
     aux_y2=max(y(aux_idx2));
     aux_y3=max(y(aux_idx3));
     
-    % WK (All_Sort = 3)
-    if aux_x1>aux_x2 && aux_x1>aux_x3
-        GMM.Prob.AWAKE=GMM.Prob.All(:,1);
-    elseif aux_x2>aux_x1 && aux_x2>aux_x3
-        GMM.Prob.AWAKE=GMM.Prob.All(:,2);
-    else
-        GMM.Prob.AWAKE=GMM.Prob.All(:,3);
-    end
+    % Concatenate aux values
+    aux_x = [aux_x1 aux_x2 aux_x3];
+    aux_y = [aux_y1 aux_y2 aux_y3];
     
-    % NREM (AllSort = 2)
-    if aux_y1<aux_y2 && aux_y1<aux_y3
-        GMM.Prob.NREM=GMM.Prob.All(:,1);
-    elseif aux_y2<aux_y1 && aux_y2<aux_y3
-        GMM.Prob.NREM=GMM.Prob.All(:,2);
-    else
-        GMM.Prob.NREM=GMM.Prob.All(:,3);
-    end
-    
-    % REM (AllSort = 1)
-    if aux_y1>aux_y2 && aux_y1>aux_y3
-        GMM.Prob.REM=GMM.Prob.All(:,1);
-    elseif aux_y2>aux_y1 && aux_y2>aux_y3
-        GMM.Prob.REM=GMM.Prob.All(:,2);
-    else
-        GMM.Prob.REM=GMM.Prob.All(:,3);
+    % Check if there is any missing state and which one is it
+    if app.Algorithm_params.missing_state && (isempty(aux_x1) || isempty(aux_x2) || isempty(aux_x3))
+        if isempty(aux_x1); idx_missing = [1 0 0]; elseif isempty(aux_x2); idx_missing = [0 1 0]; else; idx_missing = [0 0 1]; end
+        % Clear missing idxs
+        idx_missing = logical(idx_missing);
+        % Get the not missing idxs
+        idx_not_missing = find(~idx_missing);
+        switch app.Algorithm_params.missing_state_name  % Get the missing state name
+            case 'WAKE'                                 % WAKE
+                GMM.Prob.AWAKE = GMM.Prob.All(:,idx_missing);
+                if aux_y(1) > aux_y(2)
+                    GMM.Prob.REM = GMM.Prob.All(:,idx_not_missing(1));
+                    GMM.Prob.NREM = GMM.Prob.All(:,idx_not_missing(2));
+                else
+                    GMM.Prob.NREM = GMM.Prob.All(:,idx_not_missing(1));
+                    GMM.Prob.REM = GMM.Prob.All(:,idx_not_missing(2));
+                end
+            case 'NREM'                                 % NREM
+                GMM.Prob.NREM = GMM.Prob.All(:,idx_missing);
+                if aux_x(1) > aux_x(2)
+                    GMM.Prob.AWAKE = GMM.Prob.All(:,idx_not_missing(1));
+                    GMM.Prob.REM = GMM.Prob.All(:,idx_not_missing(2));
+                else
+                    GMM.Prob.REM = GMM.Prob.All(:,idx_not_missing(1));
+                    GMM.Prob.AWAKE = GMM.Prob.All(:,idx_not_missing(2));
+                end
+            case 'REM'                                  % REM
+                GMM.Prob.REM = GMM.Prob.All(:,idx_missing);
+                if aux_x(1) > aux_x(2)
+                    GMM.Prob.AWAKE = GMM.Prob.All(:,idx_not_missing(1));
+                    GMM.Prob.NREM = GMM.Prob.All(:,idx_not_missing(2));
+                else
+                    GMM.Prob.NREM = GMM.Prob.All(:,idx_not_missing(1));
+                    GMM.Prob.AWAKE = GMM.Prob.All(:,idx_not_missing(2));
+                end
+        end
+        
+    else    % Default (all the 3 states are represented)
+        
+        % WK (All_Sort = 3)
+        if aux_x1>aux_x2 && aux_x1>aux_x3
+            GMM.Prob.AWAKE=GMM.Prob.All(:,1);
+        elseif aux_x2>aux_x1 && aux_x2>aux_x3
+            GMM.Prob.AWAKE=GMM.Prob.All(:,2);
+        else
+            GMM.Prob.AWAKE=GMM.Prob.All(:,3);
+        end
+        
+        % NREM (AllSort = 2)
+        if aux_y1<aux_y2 && aux_y1<aux_y3
+            GMM.Prob.NREM=GMM.Prob.All(:,1);
+        elseif aux_y2<aux_y1 && aux_y2<aux_y3
+            GMM.Prob.NREM=GMM.Prob.All(:,2);
+        else
+            GMM.Prob.NREM=GMM.Prob.All(:,3);
+        end
+        
+        % REM (AllSort = 1)
+        if aux_y1>aux_y2 && aux_y1>aux_y3
+            GMM.Prob.REM=GMM.Prob.All(:,1);
+        elseif aux_y2>aux_y1 && aux_y2>aux_y3
+            GMM.Prob.REM=GMM.Prob.All(:,2);
+        else
+            GMM.Prob.REM=GMM.Prob.All(:,3);
+        end
+        
     end
     
     clear aux_idx*
@@ -1929,6 +1978,7 @@ if (check_point_info.status && ~check_point_info.ROC_curve) || ~check_point_info
         
         GMM.All_Threshold.TP_AWK(i)=tp/(tp+fn);
         GMM.All_Threshold.FP_AWK(i)=fp/(fp+tn);
+        
     end
     
     for i=1:size(T,2)
@@ -2030,6 +2080,18 @@ if (check_point_info.status && ~check_point_info.optimal_threshold) || ~check_po
     
     GMM.Selected_Threshold.REM_idx=optimal_threshold.rem_idx;
     GMM.Selected_Threshold.REM_value=T(optimal_threshold.rem_idx);
+    
+    % If there is any missing state
+    if app.Algorithm_params.missing_state
+        switch app.Algorithm_params.missing_state_name
+            case 'WAKE'
+                GMM.Selected_Threshold.AWAKE_value=1;
+            case 'NREM'
+                GMM.Selected_Threshold.NREM_value=1;
+            case 'REM'
+                GMM.Selected_Threshold.REM_value=1;
+        end
+    end
     
     clear optimal_threshold
     
@@ -2932,7 +2994,8 @@ if (check_point_info.status && ~check_point_info.final_class) || ~check_point_in
         hold off
         box off
         ylim([-3 11])
-        yticks([mean(x) mean(y+3) mean(aux_re+5,'omitnan') mean(aux_sw+6,'omitnan') mean(aux_aw+7,'omitnan')])
+        yticks([mean(x) mean(y+3) 6 7 8])
+%         yticks([mean(x) mean(y+3) mean(aux_re+5,'omitnan') mean(aux_sw+6,'omitnan') mean(aux_aw+7,'omitnan')])
         yticklabels({[figure_parameters.emg_accel, ' (z-score)'],label_y,'REM','NREM','AWAKE'})
         if figure_parameters.figure_over_time==2
             xlim([1 size(x,1)/figure_parameters.figure_over_time])
@@ -2962,7 +3025,7 @@ if (check_point_info.status && ~check_point_info.final_class) || ~check_point_in
             hold off
             box off
             ylim([-3 11])
-            yticks([mean(x) mean(y+3) mean(aux_re+5,'omitnan') mean(aux_sw+6,'omitnan') mean(aux_aw+7,'omitnan')])
+            yticks([mean(x) mean(y+3) 6 7 8])
             yticklabels({[figure_parameters.emg_accel, ' (z-score)'],label_y,'REM','NREM','AWAKE'})
             xlim([1 size(x,1)/figure_parameters.figure_over_time])
             xticks([1:size(x,1)/(size(figure_parameters.time_vector,1)-1):...

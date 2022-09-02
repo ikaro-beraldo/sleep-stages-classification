@@ -935,6 +935,9 @@ classdef RMS_pwelch_integrate < matlab.apps.AppBase
             % Enables the pre-processing step automatically when the app is
             % started
             app.IncludethealgorithmpreprocessingstepCheckBox.Value = true;
+            
+            % exportapp(app.SleepwakecycleclassificationsoftwareUIFigure,'Main_interface.pdf')
+            
         end
 
         % Changes arrangement of the app based on UIFigure width
@@ -2386,7 +2389,7 @@ classdef RMS_pwelch_integrate < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = RMS_pwelch_integrate
+        function app = RMS_pwelch_integrate_exported
 
             % Create UIFigure and components
             createComponents(app)

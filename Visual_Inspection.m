@@ -98,6 +98,22 @@ elseif num_ep_vis < 40  % 40 is the minimum number (if the number is lower than 
     num_ep_vis = 20;
 end
 
+% Define the minimum number of inspected epochs for each state
+num_ep_vis_WAKE = num_ep_vis;
+num_ep_vis_NREM = num_ep_vis;
+num_ep_vis_REM = num_ep_vis;
+
+if recording_app_handle.MissingsleepwakestateCheckBox.Value   % If there is any missing state
+    switch recording_app_handle.MissingStateDropDown.Value
+        case 'WAKE'
+            num_ep_vis_WAKE = 0;
+        case 'NREM'
+            num_ep_vis_NREM = 0;
+        case 'REM'
+            num_ep_vis_REM = 0;
+    end
+end
+
 clear proportion_factor
 
 %% Check if the user selected to resume an unfinished visual inspection
@@ -402,9 +418,9 @@ if visual_inspection_state
         end
         
         % Final condition to the inspection loop to be finished
-        if size(Visual_inspection.AWAKE_idx,2)>=num_ep_vis && ...
-                size(Visual_inspection.NREM_idx,2)>=num_ep_vis && ...
-                size(Visual_inspection.REM_idx,2)>=num_ep_vis && ~app_handle.FinishreinspectionButton.Visible
+        if size(Visual_inspection.AWAKE_idx,2)>=num_ep_vis_WAKE && ...
+                size(Visual_inspection.NREM_idx,2)>=num_ep_vis_NREM && ...
+                size(Visual_inspection.REM_idx,2)>=num_ep_vis_REM && ~app_handle.FinishreinspectionButton.Visible
             condition=0;
             % Very important! Defines that the algorithm can finish and
             % make the final changes in the visual inspection data
@@ -440,9 +456,9 @@ if visual_inspection_state
     % Final modifications in the visual inspection data (only done when the
     % inspection has been finished)
     if Visual_inspection.inspection_finished % 
-        Visual_inspection.AWAKE_idx=Visual_inspection.AWAKE_idx(1:num_ep_vis);
-        Visual_inspection.NREM_idx=Visual_inspection.NREM_idx(1:num_ep_vis);
-        Visual_inspection.REM_idx=Visual_inspection.REM_idx(1:num_ep_vis);
+        Visual_inspection.AWAKE_idx=Visual_inspection.AWAKE_idx(1:num_ep_vis_WAKE);
+        Visual_inspection.NREM_idx=Visual_inspection.NREM_idx(1:num_ep_vis_NREM);
+        Visual_inspection.REM_idx=Visual_inspection.REM_idx(1:num_ep_vis_REM);
         
         % Calculate the transition number
         % If it is a re-inspection

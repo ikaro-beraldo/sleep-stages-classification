@@ -157,7 +157,7 @@ classdef add_frequency_bands < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = add_frequency_bands(varargin)
+        function app = add_frequency_bands_exported(varargin)
 
             % Create UIFigure and components
             createComponents(app)

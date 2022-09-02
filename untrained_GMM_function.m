@@ -1,9 +1,14 @@
-function [GMM_Prob,GMM_nlogL,GMM_Threshold_pos_prob,succeeded] = untrained_GMM_function(data_combined,number_clusters,labels_info)
-
+function [GMM_Prob,GMM_nlogL,GMM_Threshold_pos_prob,succeeded] = untrained_GMM_function(data_combined,number_clusters,labels_info,missing_state)
+ 
 % Pre-allocate the results
 GMM_Prob = [];
 GMM_nlogL = [];
 succeeded = false;
+
+% Check whether there is a missing state
+if missing_state
+    number_clusters = number_clusters - 1;  % Subtract one cluster
+end
 
 % Call the app to check to GMM clustering
 app_handle = Check_GMM_clustering(data_combined,number_clusters,labels_info);

@@ -43,12 +43,26 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
             pre_pro_params.sampling_frequency_output_LFP = app.Algorithm_preprocessing_step_final_sampling_frequency;
     end
     % Filter parameters
-    pre_pro_params.highcutoff = 3;    % High cutoff
-    pre_pro_params.lowcutoff = [];  % Low cutoff
+    pre_pro_params.highcutoff = 100;    % High cutoff
+    pre_pro_params.lowcutoff = 3;  % Low cutoff
     
     % The raw data is stored inside .data
     
     %% Step 0 --> Calculate the acceleration vector from the accelerometer data (1 channel or 3 channels)
+    
+    % Transpose every single vector to a row vector
+    if iscolumn(accelX.data)    %X
+        accelX.data = accelX.data';
+    end
+    if iscolumn(accelY.data)    %Y
+        accelY.data = accelY.data';
+    end
+    if iscolumn(accelZ.data)    %Z
+        accelZ.data = accelZ.data';
+    end
+    if iscolumn(CA1_data_import.data)   %CA1
+        CA1_data_import.data = CA1_data_import.data';
+    end
     
     % 3 channel
     if strcmp(emg_accel_state,'Accel3')
@@ -122,12 +136,14 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
     tic
     % Allocate the variables for LFP and EMG
     DATA.LFP_hour = nan(segmentation_info.n_segments,segmentation_info.adjusted_var_length/segmentation_info.n_segments);
-    DATA.EMG_hour = accel_all.data;
+    DATA.EMG_hour = nan(segmentation_info.n_segments,segmentation_info.adjusted_var_length/segmentation_info.n_segments);
+    %     DATA.EMG_hour = accel_all.data;
     
     for segments = segmentation_info.segments
         segment_index = segmentation_info.timestamps(segments,1):segmentation_info.timestamps(segments,2);
         % LFP - detrend
         DATA.LFP_hour(segments,:) = detrend(CA1_data_import.data(segment_index),'constant');
+        DATA.EMG_hour(segments,:) = detrend(accel_all.data(segment_index),'constant');
     end
     
     % Get the sampling frequency from the raw data before excluding it

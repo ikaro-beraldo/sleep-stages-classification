@@ -136,16 +136,19 @@ classdef Check_GMM_clustering < matlab.apps.AppBase
             hold(app.Axes3,'off')
             drawnow
             
-            % Plot 4 = the posterior probability value for component 3
-            hold(app.Axes4,'on')
-            scatter(app.Axes4,app.Data_combined([cluster1; cluster2],1),app.Data_combined([cluster1; cluster2],2),5,'black')
-            scatter(app.Axes4,app.Data_combined(cluster3,1),app.Data_combined(cluster3,2),5,'red')
-            app.Axes4.XLim = [min(app.Data_combined(:,1)-0.5) max(app.Data_combined(:,1)+0.5)];
-            app.Axes4.YLim = [min(app.Data_combined(:,2)-0.5) max(app.Data_combined(:,2)+0.5)];
-%             c3 = colorbar(app.Axes4,'east');
-%             c3.Label.String = 'Posterior Probability';
-            hold(app.Axes4,'off')
-            drawnow
+            %% If the number of clusters is lesser than 3
+            if app.Number_clusters > 3
+                % Plot 4 = the posterior probability value for component 3
+                hold(app.Axes4,'on')
+                scatter(app.Axes4,app.Data_combined([cluster1; cluster2],1),app.Data_combined([cluster1; cluster2],2),5,'black')
+                scatter(app.Axes4,app.Data_combined(cluster3,1),app.Data_combined(cluster3,2),5,'red')
+                app.Axes4.XLim = [min(app.Data_combined(:,1)-0.5) max(app.Data_combined(:,1)+0.5)];
+                app.Axes4.YLim = [min(app.Data_combined(:,2)-0.5) max(app.Data_combined(:,2)+0.5)];
+                %             c3 = colorbar(app.Axes4,'east');
+                %             c3.Label.String = 'Posterior Probability';
+                hold(app.Axes4,'off')
+                drawnow
+            end
             
         end
         
@@ -309,7 +312,7 @@ classdef Check_GMM_clustering < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = Check_GMM_clustering(varargin)
+        function app = Check_GMM_clustering_exported(varargin)
 
             % Create UIFigure and components
             createComponents(app)

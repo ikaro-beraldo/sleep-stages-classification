@@ -2,36 +2,38 @@ classdef recording_parameters < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                     matlab.ui.Figure
-        OKButton                     matlab.ui.control.Button
-        RecordingParametersPanel     matlab.ui.container.Panel
-        NoiseRangeHzLabel            matlab.ui.control.Label
-        RecordingTimeHoursLabel      matlab.ui.control.Label
-        AnimalGroupDropDownLabel     matlab.ui.control.Label
-        AnimalGroupDropDown          matlab.ui.control.DropDown
-        InferiorEditFieldLabel       matlab.ui.control.Label
-        InferiorEditField            matlab.ui.control.NumericEditField
-        SuperiorEditFieldLabel       matlab.ui.control.Label
-        SuperiorEditField            matlab.ui.control.NumericEditField
-        BeginningEditFieldLabel      matlab.ui.control.Label
-        BeginningEditField           matlab.ui.control.NumericEditField
-        EndEditFieldLabel            matlab.ui.control.Label
-        EndEditField                 matlab.ui.control.NumericEditField
-        PlottraineddataCheckBox      matlab.ui.control.CheckBox
-        StatusTextAreaLabel          matlab.ui.control.Label
-        StatusTextArea               matlab.ui.control.TextArea
-        OutputPathEditField          matlab.ui.control.EditField
-        OutputPathButton             matlab.ui.control.Button
+        UIFigure                       matlab.ui.Figure
+        OKButton                       matlab.ui.control.Button
+        RecordingParametersPanel       matlab.ui.container.Panel
+        NoiseRangeHzLabel              matlab.ui.control.Label
+        RecordingTimeHoursLabel        matlab.ui.control.Label
+        AnimalGroupDropDownLabel       matlab.ui.control.Label
+        AnimalGroupDropDown            matlab.ui.control.DropDown
+        InferiorEditFieldLabel         matlab.ui.control.Label
+        InferiorEditField              matlab.ui.control.NumericEditField
+        SuperiorEditFieldLabel         matlab.ui.control.Label
+        SuperiorEditField              matlab.ui.control.NumericEditField
+        BeginningEditFieldLabel        matlab.ui.control.Label
+        BeginningEditField             matlab.ui.control.NumericEditField
+        EndEditFieldLabel              matlab.ui.control.Label
+        EndEditField                   matlab.ui.control.NumericEditField
+        PlottraineddataCheckBox        matlab.ui.control.CheckBox
+        StatusTextAreaLabel            matlab.ui.control.Label
+        StatusTextArea                 matlab.ui.control.TextArea
+        OutputPathEditField            matlab.ui.control.EditField
+        OutputPathButton               matlab.ui.control.Button
         SavesomerepresentativeepochsCheckBox  matlab.ui.control.CheckBox
-        RunvisualinspectionPanel     matlab.ui.container.Panel
+        RunvisualinspectionPanel       matlab.ui.container.Panel
         RunvisualinspectionMandatoryforthefirsttimeCheckBox  matlab.ui.control.CheckBox
         ContinueanunfinishedvisualinspectionCheckBox  matlab.ui.control.CheckBox
         StartfromthelaststepcompletedCheckBox  matlab.ui.control.CheckBox
-        Panel                        matlab.ui.container.Panel
+        Panel                          matlab.ui.container.Panel
         ArtifactdetectionamplitudetresholdSDLabel  matlab.ui.control.Label
         ArtifactdetectionamplitudetresholdSDEditField  matlab.ui.control.NumericEditField
         ClassifythetransitionsbetweenNREMandREMCheckBox  matlab.ui.control.CheckBox
-        UseatrainingdatasetCheckBox  matlab.ui.control.CheckBox
+        UseatrainingdatasetCheckBox    matlab.ui.control.CheckBox
+        MissingsleepwakestateCheckBox  matlab.ui.control.CheckBox
+        MissingStateDropDown           matlab.ui.control.DropDown
     end
 
     
@@ -65,6 +67,9 @@ classdef recording_parameters < matlab.apps.AppBase
             app.OKButton.Enable = false;
             app.StartfromthelaststepcompletedCheckBox.Enable = false;
             app.ClassifythetransitionsbetweenNREMandREMCheckBox.Enable = false;
+            app.MissingsleepwakestateCheckBox.Enable = false;
+            app.UseatrainingdatasetCheckBox.Enable = false;
+            app.MissingStateDropDown.Enable = false;
             
             % Update the graphical interface
             drawnow
@@ -107,6 +112,8 @@ classdef recording_parameters < matlab.apps.AppBase
             algorithm_params.continue_visual_inspection = app.ContinueanunfinishedvisualinspectionCheckBox.Value;
             algorithm_params.plot_representative_epochs = app.SavesomerepresentativeepochsCheckBox.Value;
             algorithm_params.training_dataset = app.UseatrainingdatasetCheckBox.Value;
+            algorithm_params.missing_state = app.MissingsleepwakestateCheckBox.Value;
+            algorithm_params.missing_state_name = app.MissingStateDropDown.Value;
             
             % Get the output path
             output_path = app.OutputPathEditField.Value;
@@ -159,6 +166,15 @@ classdef recording_parameters < matlab.apps.AppBase
             end
             
         end
+
+        % Value changed function: MissingsleepwakestateCheckBox
+        function MissingsleepwakestateCheckBoxValueChanged(app, event)
+            % Enables or Unable the drop down menu according to the user
+            % selection
+            app.MissingStateDropDown.Enable = app.MissingsleepwakestateCheckBox.Value;
+            % Update the interface
+            drawnow
+        end
     end
 
     % Component initialization
@@ -169,20 +185,20 @@ classdef recording_parameters < matlab.apps.AppBase
 
             % Create UIFigure and hide until all components are created
             app.UIFigure = uifigure('Visible', 'off');
-            app.UIFigure.Position = [100 100 719 368];
+            app.UIFigure.Position = [100 100 719 409];
             app.UIFigure.Name = 'MATLAB App';
 
             % Create OKButton
             app.OKButton = uibutton(app.UIFigure, 'push');
             app.OKButton.ButtonPushedFcn = createCallbackFcn(app, @OKButtonPushed, true);
-            app.OKButton.Position = [591 59 99 23];
+            app.OKButton.Position = [591 50 99 23];
             app.OKButton.Text = 'OK';
 
             % Create RecordingParametersPanel
             app.RecordingParametersPanel = uipanel(app.UIFigure);
             app.RecordingParametersPanel.TitlePosition = 'centertop';
             app.RecordingParametersPanel.Title = 'Recording Parameters';
-            app.RecordingParametersPanel.Position = [30 98 316 207];
+            app.RecordingParametersPanel.Position = [30 139 316 207];
 
             % Create NoiseRangeHzLabel
             app.NoiseRangeHzLabel = uilabel(app.RecordingParametersPanel);
@@ -254,43 +270,43 @@ classdef recording_parameters < matlab.apps.AppBase
             app.PlottraineddataCheckBox = uicheckbox(app.UIFigure);
             app.PlottraineddataCheckBox.Visible = 'off';
             app.PlottraineddataCheckBox.Text = 'Plot trained data';
-            app.PlottraineddataCheckBox.Position = [365 77 109 22];
+            app.PlottraineddataCheckBox.Position = [365 118 109 22];
             app.PlottraineddataCheckBox.Value = true;
 
             % Create StatusTextAreaLabel
             app.StatusTextAreaLabel = uilabel(app.UIFigure);
             app.StatusTextAreaLabel.HorizontalAlignment = 'right';
-            app.StatusTextAreaLabel.Position = [30 18 39 22];
+            app.StatusTextAreaLabel.Position = [30 19 39 22];
             app.StatusTextAreaLabel.Text = 'Status';
 
             % Create StatusTextArea
             app.StatusTextArea = uitextarea(app.UIFigure);
             app.StatusTextArea.Editable = 'off';
-            app.StatusTextArea.Position = [84 11 606 31];
+            app.StatusTextArea.Position = [84 12 606 31];
             app.StatusTextArea.Value = {''; ''};
 
             % Create OutputPathEditField
             app.OutputPathEditField = uieditfield(app.UIFigure, 'text');
             app.OutputPathEditField.Editable = 'off';
-            app.OutputPathEditField.Position = [109 325 581 22];
+            app.OutputPathEditField.Position = [109 366 581 22];
             app.OutputPathEditField.Value = 'Choose the output path ';
 
             % Create OutputPathButton
             app.OutputPathButton = uibutton(app.UIFigure, 'push');
             app.OutputPathButton.ButtonPushedFcn = createCallbackFcn(app, @OutputPathButtonPushed, true);
-            app.OutputPathButton.Position = [30 317 55 36];
+            app.OutputPathButton.Position = [30 358 55 36];
             app.OutputPathButton.Text = {'Output'; ' Path'};
 
             % Create SavesomerepresentativeepochsCheckBox
             app.SavesomerepresentativeepochsCheckBox = uicheckbox(app.UIFigure);
             app.SavesomerepresentativeepochsCheckBox.Text = 'Save some representative epochs';
-            app.SavesomerepresentativeepochsCheckBox.Position = [385 186 204 22];
+            app.SavesomerepresentativeepochsCheckBox.Position = [385 227 204 22];
             app.SavesomerepresentativeepochsCheckBox.Value = true;
 
             % Create RunvisualinspectionPanel
             app.RunvisualinspectionPanel = uipanel(app.UIFigure);
             app.RunvisualinspectionPanel.Title = 'Run visual inspection';
-            app.RunvisualinspectionPanel.Position = [365 218 325 86];
+            app.RunvisualinspectionPanel.Position = [365 259 325 86];
 
             % Create RunvisualinspectionMandatoryforthefirsttimeCheckBox
             app.RunvisualinspectionMandatoryforthefirsttimeCheckBox = uicheckbox(app.RunvisualinspectionPanel);
@@ -307,12 +323,12 @@ classdef recording_parameters < matlab.apps.AppBase
             % Create StartfromthelaststepcompletedCheckBox
             app.StartfromthelaststepcompletedCheckBox = uicheckbox(app.UIFigure);
             app.StartfromthelaststepcompletedCheckBox.Text = 'Start from the last step completed';
-            app.StartfromthelaststepcompletedCheckBox.Position = [385 153 202 22];
+            app.StartfromthelaststepcompletedCheckBox.Position = [385 194 202 22];
             app.StartfromthelaststepcompletedCheckBox.Value = true;
 
             % Create Panel
             app.Panel = uipanel(app.UIFigure);
-            app.Panel.Position = [30 59 316 31];
+            app.Panel.Position = [30 100 316 31];
 
             % Create ArtifactdetectionamplitudetresholdSDLabel
             app.ArtifactdetectionamplitudetresholdSDLabel = uilabel(app.Panel);
@@ -328,13 +344,26 @@ classdef recording_parameters < matlab.apps.AppBase
             % Create ClassifythetransitionsbetweenNREMandREMCheckBox
             app.ClassifythetransitionsbetweenNREMandREMCheckBox = uicheckbox(app.UIFigure);
             app.ClassifythetransitionsbetweenNREMandREMCheckBox.Text = 'Classify the transitions between NREM and REM';
-            app.ClassifythetransitionsbetweenNREMandREMCheckBox.Position = [385 121 286 22];
+            app.ClassifythetransitionsbetweenNREMandREMCheckBox.Position = [385 162 286 22];
 
             % Create UseatrainingdatasetCheckBox
             app.UseatrainingdatasetCheckBox = uicheckbox(app.UIFigure);
             app.UseatrainingdatasetCheckBox.Text = 'Use a training dataset';
-            app.UseatrainingdatasetCheckBox.Position = [385 89 139 22];
+            app.UseatrainingdatasetCheckBox.Position = [385 130 139 22];
             app.UseatrainingdatasetCheckBox.Value = true;
+
+            % Create MissingsleepwakestateCheckBox
+            app.MissingsleepwakestateCheckBox = uicheckbox(app.UIFigure);
+            app.MissingsleepwakestateCheckBox.ValueChangedFcn = createCallbackFcn(app, @MissingsleepwakestateCheckBoxValueChanged, true);
+            app.MissingsleepwakestateCheckBox.Text = 'Missing sleep-wake state';
+            app.MissingsleepwakestateCheckBox.Position = [385 97 156 22];
+
+            % Create MissingStateDropDown
+            app.MissingStateDropDown = uidropdown(app.UIFigure);
+            app.MissingStateDropDown.Items = {'WAKE', 'NREM', 'REM'};
+            app.MissingStateDropDown.Enable = 'off';
+            app.MissingStateDropDown.Position = [555 97 100 22];
+            app.MissingStateDropDown.Value = 'WAKE';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
@@ -345,7 +374,7 @@ classdef recording_parameters < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = recording_parameters(varargin)
+        function app = recording_parameters_exported(varargin)
 
             % Create UIFigure and components
             createComponents(app)
