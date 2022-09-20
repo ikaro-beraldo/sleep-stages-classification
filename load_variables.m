@@ -531,7 +531,7 @@ classdef load_variables < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = load_variables_exported(varargin)
+        function app = load_variables(varargin)
 
             % Create UIFigure and components
             createComponents(app)
