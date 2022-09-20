@@ -312,7 +312,7 @@ classdef Check_GMM_clustering < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = Check_GMM_clustering_exported(varargin)
+        function app = Check_GMM_clustering(varargin)
 
             % Create UIFigure and components
             createComponents(app)
