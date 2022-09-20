@@ -374,7 +374,7 @@ classdef recording_parameters < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = recording_parameters_exported(varargin)
+        function app = recording_parameters(varargin)
 
             % Create UIFigure and components
             createComponents(app)
