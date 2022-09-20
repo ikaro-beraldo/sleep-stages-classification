@@ -638,7 +638,7 @@ classdef Plot_app < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = Plot_app_exported(varargin)
+        function app = Plot_app(varargin)
 
             % Create UIFigure and components
             createComponents(app)
