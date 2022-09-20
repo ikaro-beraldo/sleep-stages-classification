@@ -2389,7 +2389,7 @@ classdef RMS_pwelch_integrate < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = RMS_pwelch_integrate_exported
+        function app = RMS_pwelch_integrate
 
             % Create UIFigure and components
             createComponents(app)
