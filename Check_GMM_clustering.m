@@ -137,7 +137,7 @@ classdef Check_GMM_clustering < matlab.apps.AppBase
             drawnow
             
             %% If the number of clusters is lesser than 3
-            if app.Number_clusters > 3
+            if app.Number_clusters >= 3
                 % Plot 4 = the posterior probability value for component 3
                 hold(app.Axes4,'on')
                 scatter(app.Axes4,app.Data_combined([cluster1; cluster2],1),app.Data_combined([cluster1; cluster2],2),5,'black')
