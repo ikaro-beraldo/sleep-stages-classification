@@ -21,6 +21,9 @@ GMM_nlogL = app_handle.GMM_nLogL;
 succeeded = app_handle.Succeeded;
 GMM_Threshold_pos_prob = app_handle.Threshold_pos_prob;
 
+% Create a third pseudo-cluster 
+GMM_Prob = [GMM_Prob zeros(size(GMM_Prob,1),1)];
+
 % Delete the Check_GMM_clustering app
 app_handle.delete;
 end

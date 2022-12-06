@@ -72,7 +72,7 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
         accelY.data = [0 abs(diff(accelY.data))];
         accelZ.data = [0 abs(diff(accelZ.data))];
         
-        % Get the accelaration force total vector 
+        % Get the accelaration force total vector
         accel_all.data = sqrt(sqrt(accelX.data.^2 + accelY.data.^2).^2 + accelZ.data.^2);
         % Get the sampling frequency
         accel_all.sampling_frequency = accelX.sampling_frequency;
@@ -105,7 +105,7 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
     tic
     % Blocking Raw Data
     n=pre_pro_params.epoch_length*CA1_data_import.sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
-    m=floor(length(CA1_data_import.data)/n);  % Total number of epochs  
+    m=floor(length(CA1_data_import.data)/n);  % Total number of epochs
     
     % Excluding the extra samples
     CA1_data_import.data(n*m+1:end) = [];
@@ -117,15 +117,15 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
     % LFP
     RAW_DATA.LFP_raw_data = reshape(CA1_data_import.data',n,m)'; % Reshaping
     % Saves EMG raw sampling frequency
-    RAW_DATA.LFP_fs_raw =  CA1_data_import.sampling_frequency;    
+    RAW_DATA.LFP_fs_raw =  CA1_data_import.sampling_frequency;
     % Save the LFP blocked raw data
     save(filenameLoad_raw_data,'-struct','RAW_DATA','-v7.3')
-    clear RAW_DATA     
-        
+    clear RAW_DATA
+    
     % EMG
-    RAW_DATA.EMG_raw_data = reshape(accel_all.data',n,m)'; % Reshaping    
+    RAW_DATA.EMG_raw_data = reshape(accel_all.data',n,m)'; % Reshaping
     % Saves EMG raw sampling frequency
-    RAW_DATA.EMG_fs_raw =  accel_all.sampling_frequency;    
+    RAW_DATA.EMG_fs_raw =  accel_all.sampling_frequency;
     % Save the EMG blocked raw data
     save(filenameLoad_raw_data,'-struct','RAW_DATA','-append')
     clear RAW_ DATA
@@ -214,7 +214,7 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
     % Filtering data
     DATA.EMG_hour = filter(b,a,DATA.EMG_hour,[],2);
     
-     %     for segments = segmentation_info.segments
+    %     for segments = segmentation_info.segments
     %         % Filter function (eegfilt)
     %         DATA.EMG_hour(segments,:) = eegfilt2(DATA.EMG_hour(segments,:),DATA.EMG_processed_sampling_frequency,pre_pro_params.lowcutoff,[]);
     %         DATA.EMG_hour(segments,:) = eegfilt2(DATA.EMG_hour(segments,:),DATA.EMG_processed_sampling_frequency,[],pre_pro_params.highcutoff);
@@ -222,88 +222,120 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
     toc
     
     %% 5th Step -> Notch
-%     disp('notch')
-%     tic
-%     Loop for each of the harmonics
-%     for harm = 1:length(pre_pro_params.notch)
-%         
-%         Check if the notch frequency is lower than half the sampling
-%         frequency
-%         if pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension < DATA.EMG_processed_sampling_frequency/2
-%             EMG
-%             Create the filter (Butter 2nd order)
-%             fs = DATA.EMG_processed_sampling_frequency; % sampling_frequency
-%             n = 2; % filt order
-%             nyquist_rate = fs/2;
-%             Wn = [pre_pro_params.notch(harm)-pre_pro_params.notch_frequency_extension pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension]/nyquist_rate;  % Lower and Upper frequency limits
-%             ftype = 'stop'; % filter type
-%             [b,a] = butter(n,Wn,ftype); % Create the butter filter
-%             
-%             Filtering EMG data
-%             DATA.EMG_hour = filter(b,a,DATA.EMG_hour,[],2);
-%         end
-%         
-%         LFP
-%         Check if the notch frequency is lower than half the sampling
-%         frequency
-%         if pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension < DATA.LFP_processed_sampling_frequency/2
-%             
-%             Create the filter (Butter 2nd order)
-%             fs = DATA.LFP_processed_sampling_frequency; % sampling_frequency
-%             n = 2; % filt order
-%             nyquist_rate = fs/2;
-%             Wn = [pre_pro_params.notch(harm)-pre_pro_params.notch_frequency_extension pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension]/nyquist_rate;  % Lower and Upper frequency limits
-%             ftype = 'stop'; % filter type
-%             [b,a] = butter(n,Wn,ftype); % Create the butter filter
-%             
-%             Filtering LFP data
-%             DATA.LFP_hour = filter(b,a,DATA.LFP_hour,[],2);
-%         end        
-%     end
-%     toc
-   
-    %% 6th --> Blocking Filtered Data
-    tic
-    n=pre_pro_params.epoch_length*DATA.LFP_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    %     disp('notch')
+    %     tic
+    %     Loop for each of the harmonics
+    %     for harm = 1:length(pre_pro_params.notch)
+    %
+    %         Check if the notch frequency is lower than half the sampling
+    %         frequency
+    %         if pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension < DATA.EMG_processed_sampling_frequency/2
+    %             EMG
+    %             Create the filter (Butter 2nd order)
+    %             fs = DATA.EMG_processed_sampling_frequency; % sampling_frequency
+    %             n = 2; % filt order
+    %             nyquist_rate = fs/2;
+    %             Wn = [pre_pro_params.notch(harm)-pre_pro_params.notch_frequency_extension pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension]/nyquist_rate;  % Lower and Upper frequency limits
+    %             ftype = 'stop'; % filter type
+    %             [b,a] = butter(n,Wn,ftype); % Create the butter filter
+    %
+    %             Filtering EMG data
+    %             DATA.EMG_hour = filter(b,a,DATA.EMG_hour,[],2);
+    %         end
+    %
+    %         LFP
+    %         Check if the notch frequency is lower than half the sampling
+    %         frequency
+    %         if pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension < DATA.LFP_processed_sampling_frequency/2
+    %
+    %             Create the filter (Butter 2nd order)
+    %             fs = DATA.LFP_processed_sampling_frequency; % sampling_frequency
+    %             n = 2; % filt order
+    %             nyquist_rate = fs/2;
+    %             Wn = [pre_pro_params.notch(harm)-pre_pro_params.notch_frequency_extension pre_pro_params.notch(harm)+pre_pro_params.notch_frequency_extension]/nyquist_rate;  % Lower and Upper frequency limits
+    %             ftype = 'stop'; % filter type
+    %             [b,a] = butter(n,Wn,ftype); % Create the butter filter
+    %
+    %             Filtering LFP data
+    %             DATA.LFP_hour = filter(b,a,DATA.LFP_hour,[],2);
+    %         end
+    %     end
+    %     toc
     
-    % Number of blocks in each segment
-    n_blocks_each_segment = floor(size(DATA.LFP_hour,2) / n);
+    %% 6th --> Blocking Filtered Data (Faster and Matching the RAW data size)
+    n=pre_pro_params.epoch_length*DATA.LFP_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    % Total number of blocks
+    n_blocks = floor(numel(DATA.LFP_hour) / n);
     % LFP
-    DATA.LFP_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix (N blocks in each segment * N of segments)
-    segment_counter = 0;
-    for segments = segmentation_info.segments % Segments loop
-        for i = 1:n_blocks_each_segment  % Blocks loop
-            a = 1+(i-1)*n;
-            b = i*n;
-            DATA.LFP_epochs(i+segment_counter,:) = DATA.LFP_hour(segments,a:b);
-        end
-        segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
-    end
-    % Exclude extra NaN values
-    DATA.LFP_epochs(isnan(DATA.LFP_epochs(:,1)),:) = [];
+    % Eliminate the extra samples
+    DATA.LFP_epochs = reshape(DATA.LFP_hour',1,[]);
+    DATA.LFP_epochs(n*n_blocks + 1:end) = [];
+    % Reshape the LFP hour (Break into n sample blocks)
+    DATA.LFP_epochs = reshape(DATA.LFP_epochs,n,n_blocks)';
     DATA = rmfield(DATA,'LFP_hour');  % Remove the field LFP_epochs
     
     % EMG
     n=pre_pro_params.epoch_length*DATA.EMG_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
-    % Number of blocks in each segment
-    n_blocks_each_segment = floor(size(DATA.EMG_hour,2) / n);
+    % Total number of blocks
+    n_blocks = floor(numel(DATA.EMG_hour) / n);
     % EMG
-    DATA.EMG_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix
-    segment_counter = 0;
-    for segments = segmentation_info.segments % Segments loop
-        for i = 1:n_blocks_each_segment  % Blocks loop
-            a = 1+(i-1)*n;
-            b = i*n;
-            DATA.EMG_epochs(i+segment_counter,:) = DATA.EMG_hour(segments,a:b);
-        end
-        segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
-    end
-    % Exclude extra NaN values
-    DATA.EMG_epochs(isnan(DATA.EMG_epochs(:,1)),:) = [];
+    % Eliminate the extra samples
+    DATA.EMG_epochs = reshape(DATA.EMG_hour',1,[]);
+    DATA.EMG_epochs(n*n_blocks + 1:end) = [];
+    % Reshape the EMG hour (Break into n sample blocks)
+    DATA.EMG_epochs = reshape(DATA.EMG_epochs,n,n_blocks)';
     DATA = rmfield(DATA,'EMG_hour');  % Remove the field LFP_epochs
+    
+     % Add a final block by block detrend
+    DATA.LFP_epochs = detrend(DATA.LFP_epochs','constant')';
+    DATA.EMG_epochs = detrend(DATA.EMG_epochs','constant')';
     
     clear a b i m n segment_counter n_blocks_each_segment
     toc
+    %%
+    
+    %     %% 6th --> Blocking Filtered Data
+    %     tic
+    %     n=pre_pro_params.epoch_length*DATA.LFP_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    %
+    %     % Number of blocks in each segment
+    %     n_blocks_each_segment = floor(size(DATA.LFP_hour,2) / n);
+    %     % LFP
+    %     DATA.LFP_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix (N blocks in each segment * N of segments)
+    %     segment_counter = 0;
+    %     for segments = segmentation_info.segments % Segments loop
+    %         for i = 1:n_blocks_each_segment  % Blocks loop
+    %             a = 1+(i-1)*n;
+    %             b = i*n;
+    %             DATA.LFP_epochs(i+segment_counter,:) = DATA.LFP_hour(segments,a:b);
+    %         end
+    %         segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
+    %     end
+    %     % Exclude extra NaN values
+    %     DATA.LFP_epochs(isnan(DATA.LFP_epochs(:,1)),:) = [];
+    %     DATA = rmfield(DATA,'LFP_hour');  % Remove the field LFP_epochs
+    %
+    %     % EMG
+    %     n=pre_pro_params.epoch_length*DATA.EMG_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    %     % Number of blocks in each segment
+    %     n_blocks_each_segment = floor(size(DATA.EMG_hour,2) / n);
+    %     % EMG
+    %     DATA.EMG_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix
+    %     segment_counter = 0;
+    %     for segments = segmentation_info.segments % Segments loop
+    %         for i = 1:n_blocks_each_segment  % Blocks loop
+    %             a = 1+(i-1)*n;
+    %             b = i*n;
+    %             DATA.EMG_epochs(i+segment_counter,:) = DATA.EMG_hour(segments,a:b);
+    %         end
+    %         segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
+    %     end
+    %     % Exclude extra NaN values
+    %     DATA.EMG_epochs(isnan(DATA.EMG_epochs(:,1)),:) = [];
+    %     DATA = rmfield(DATA,'EMG_hour');  % Remove the field LFP_epochs
+    %
+    %     clear a b i m n segment_counter n_blocks_each_segment
+    %     toc
 else % If the pre processing step has already been done before
     
     % Check if the data has been pre-processed by the alternative
@@ -408,7 +440,7 @@ for i=1:size(DATA.LFP_epochs,1)     % Each single block
     Wn = lowcutoff/nyquist_rate;  % Lower and Upper frequency limits
     ftype = 'low'; % filter type
     [b,a] = butter(n,Wn,ftype); % Create the butter filter
-     
+    
     % Filtering data
     artifact_block = filter(b,a,DATA.LFP_epochs(i,:),[],2);
     

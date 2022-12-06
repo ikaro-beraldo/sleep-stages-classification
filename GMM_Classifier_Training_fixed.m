@@ -4,7 +4,7 @@
 % Main input:
 % Main output:
 %
-% 
+%
 %
 % IMPORTANT: All figures will be saved in '.pdf' files in your Current
 % folder.
@@ -18,7 +18,7 @@ clc
 
 % If the data was selected from workspace, exclude it to avoid excessive
 % use of memory
-if strcmp(app.Algorithm_selected_radio_button_tag,'workspace') 
+if strcmp(app.Algorithm_selected_radio_button_tag,'workspace')
     % Erase the selected data
     app.Workspace(selected_indices) = [];
     % Updatee workspace
@@ -49,13 +49,13 @@ if load_data
     load(fullfile(path,'ALL_DATA.mat'),'EMG_processed_sampling_frequency')       % Get the EMG sampling frequency
     
     if ~(app.EpochLengthValue * EMG_processed_sampling_frequency == emg_size(2)) % Check if the epoch length informed by the user is equal to the epoch length from the ALL_DATA files
-        % Case it doesn't match        
+        % Case it doesn't match
         % Open a dialog window so the user can choose which epoch length
         % will be used and act accordingly
         
         fig_dlg = app.SleepwakecycleclassificationsoftwareUIFigure; % Handle of the figure (it's the app figurer itself)
         msg = [sprintf("The epoch length informed (%d sec) does not match the data epoch length (%d sec). ",app.EpochLengthValue,emg_size(2)/EMG_processed_sampling_frequency);...  % Message that will apper on the new dialog box
-        "(1) You can use the option '1 - Use workspace data' and select the checkbox 'Include the algorithm pre-processing step' in the main window and change the epoch length as you wish. (2) Or change the epoch length informed to match the data."];
+            "(1) You can use the option '1 - Use workspace data' and select the checkbox 'Include the algorithm pre-processing step' in the main window and change the epoch length as you wish. (2) Or change the epoch length informed to match the data."];
         tit = 'Epoch length does not match'; % Title
         selection = uiconfirm(fig_dlg,msg,tit,...
             'Options',{'1 - Finish','2 - Change the epoch length','Cancel'},...
@@ -72,7 +72,7 @@ if load_data
             case 'Cancel' % Do not do anything (keeps the app window as it is)
                 app.StatusTextArea.Value = 'The classification could not be completed'; % Change the status check box from the main window
                 return         % Finish the current function
-        end       
+        end
     end
     clearvars variableInfo emg_size EMG_processed_sampling_frequency tit msg selection
     
@@ -104,7 +104,7 @@ if load_data
     else % GMM does not exist.
         create_GMM = true;
         create_GMM_check_point = true;
-    end     
+    end
     
 else
     
@@ -123,7 +123,7 @@ else
     % point variable
     create_GMM_check_point = true;
     create_GMM = true;
-        
+    
     clear prompt ip
 end
 
@@ -143,7 +143,7 @@ drawnow % Refresh the interface
 %% Open the GMM and Visual Inspection variables if it will continue from the last executed step
 
 %%% ##################### ARRUMAR ####################33   verificar o
-%%% check point do IDX pra garantir que ele tem os arquivos certinhos 
+%%% check point do IDX pra garantir que ele tem os arquivos certinhos
 
 if ~app.Recording_app.Check_Point_Status     % If the status is false (The user wants to go through every single step)
     create_GMM_check_point = true;           % Informs to the algorithm that a new check point variable has to be created
@@ -183,7 +183,7 @@ if create_GMM_check_point
     check_point_info.freq_6_to_90 = false;
     check_point_info.plot_representative = false;
     check_point_info.artifact_detection = false;
-       
+    
 else    % If a new check point status will not be created, just get the status
     check_point_info.status = app.Recording_app.Check_Point_Status;
 end
@@ -202,7 +202,7 @@ if app.Recording_app.Check_Point_Status && ~create_GMM      % Check if a new GMM
 end
 
 if app.Recording_app.Check_Point_Status && check_point_info.visual_inspection   % Check whether the visual inspection has already been completed
-    load(fullfile(outputPath,'IDX_Visual_Inspection.mat'))                      % Load Visual Inspection 
+    load(fullfile(outputPath,'IDX_Visual_Inspection.mat'))                      % Load Visual Inspection
 end
 
 %% Figures parameters
@@ -291,11 +291,11 @@ number_clusters=3;
 
 % Setting the type of data used to indicate the animal movement (It will
 % change the axis labels)
-if strcmp(emg_accel_state,'EMG')    
+if strcmp(emg_accel_state,'EMG')
     figure_parameters.emg_accel = 'EMG';
 else
     figure_parameters.emg_accel = 'Accel';
-end    
+end
 
 % Setting the y axis limit when plotting an epoch (figure out the unit of
 % measurement)
@@ -1189,7 +1189,7 @@ if (check_point_info.status && ~check_point_info.data_dist) || ~check_point_info
     % Update the check and save it
     check_point_info.data_dist = true;
     save(fullfile(outputPath,'GMM_Classification.mat'),'check_point_info','-append')
-        
+    
 end
 
 %% Training epochs (Excluded)
@@ -1297,26 +1297,26 @@ end
 % Check if the check point option e enable and if this step has already
 % been done
 if (check_point_info.status && ~check_point_info.artifact_detection) || ~check_point_info.status
-
-%Update status
-status_text = 'Running artifact detection...';
-change_status_text(app.Recording_app,status_text);
-drawnow() % Update any changes
-
-% Call the function to proceed with the artifact detection
-[artifact,finished] = artifacts_detection(EMG,LFP,outputPath,app.Recording_app.ArtifactdetectionamplitudetresholdSDEditField.Value,...
-    app.Recording_app.InferiorEditField.Value,app.Recording_app.SuperiorEditField.Value,figure_parameters);
-
-% If the user has not finished the artifact detection, stop the
-% classification algorithm and return to the main interface
-if ~finished
-    return      % Stops the execution of the function 
-end
-
-% Update the check and save it
-check_point_info.artifact_detection = true;
-save(fullfile(outputPath,'GMM_Classification.mat'),'check_point_info','artifact','-append')
-
+    
+    %Update status
+    status_text = 'Running artifact detection...';
+    change_status_text(app.Recording_app,status_text);
+    drawnow() % Update any changes
+    
+    % Call the function to proceed with the artifact detection
+    [artifact,finished] = artifacts_detection(EMG,LFP,outputPath,app.Recording_app.ArtifactdetectionamplitudetresholdSDEditField.Value,...
+        app.Recording_app.InferiorEditField.Value,app.Recording_app.SuperiorEditField.Value,figure_parameters);
+    
+    % If the user has not finished the artifact detection, stop the
+    % classification algorithm and return to the main interface
+    if ~finished
+        return      % Stops the execution of the function
+    end
+    
+    % Update the check and save it
+    check_point_info.artifact_detection = true;
+    save(fullfile(outputPath,'GMM_Classification.mat'),'check_point_info','artifact','-append')
+    
 end
 
 %% Running trained GMM
@@ -1338,31 +1338,31 @@ if (check_point_info.status && ~check_point_info.run_trained_gmm) || ~check_poin
     % Load the Trained_data.m file
     load(trained_data_filepathway,'Training_data')
     
-%     % Change the distribution to match the training data distribution
-%     difference_theta_delta = min(Training_data.LFP_used) - min(x);
-%     difference_emg = min(Training_data.EMG_used) - min(y);
-%     
-%     % Data 
-%     data_combined(:,1) = data_combined(:,1) + difference_emg;
-%     data_combined(:,2) = data_combined(:,2) + difference_theta_delta;    
-        
+    %     % Change the distribution to match the training data distribution
+    %     difference_theta_delta = min(Training_data.LFP_used) - min(x);
+    %     difference_emg = min(Training_data.EMG_used) - min(y);
+    %
+    %     % Data
+    %     data_combined(:,1) = data_combined(:,1) + difference_emg;
+    %     data_combined(:,2) = data_combined(:,2) + difference_theta_delta;
+    
     % Running the GMM with the epochs excluded
     artifact.data_combined_artifact_free=[artifact.x_artifact_free' artifact.y_artifact_free'];
     
-%     % Change the distribution to match the training data distribution
-%     difference_theta_delta = nanmedian(Training_data.LFP_used) - nanmedian(artifact.y_artifact_free);
-%     difference_emg = nanmedian(Training_data.EMG_used) - nanmedian(artifact.x_artifact_free);
-%     
-%     % Data
-%     artifact.data_combined_artifact_free(:,1) = artifact.data_combined_artifact_free(:,1) + difference_emg;
-%     artifact.data_combined_artifact_free(:,2) = artifact.data_combined_artifact_free(:,2) + difference_theta_delta;
-%      
-      
-    % Check if the user enabled the GMM training 
+    %     % Change the distribution to match the training data distribution
+    %     difference_theta_delta = nanmedian(Training_data.LFP_used) - nanmedian(artifact.y_artifact_free);
+    %     difference_emg = nanmedian(Training_data.EMG_used) - nanmedian(artifact.x_artifact_free);
+    %
+    %     % Data
+    %     artifact.data_combined_artifact_free(:,1) = artifact.data_combined_artifact_free(:,1) + difference_emg;
+    %     artifact.data_combined_artifact_free(:,2) = artifact.data_combined_artifact_free(:,2) + difference_theta_delta;
+    %
+    
+    % Check if the user enabled the GMM training
     if app.Algorithm_params.training_dataset    % If it is enabled
         % Fitting trained data
         [artifact.GMM.Prob.All,artifact.GMM.nlogL,threshold_pos_prob,succeeded] = trained_GMM_function(artifact.data_combined_artifact_free,number_clusters,Training_data.Trained_GMM,Training_data.LFP_used,Training_data.EMG_used,app.Algorithm_params.missing_state);
-
+        
     else                                        % If it is disabled (without training dataset
         % Get the label info to be used in the plots
         labels_info.xlabel = figure_parameters.emg_accel;
@@ -1386,86 +1386,86 @@ if (check_point_info.status && ~check_point_info.run_trained_gmm) || ~check_poin
     % A Partir daqui é o original
     % Keep calculating the GMM until a good cluster is formed (max 1000
     % iterations)
-%     for gmm_loop = 1:1000
-%         
-%         try
-%             % Fitting trained data
-%             artifact.GMM.GMM_distribution = fitgmdist(artifact.data_combined_artifact_free,number_clusters,...
-%                 'Start',Training_data.Trained_GMM);
-%         catch ME  % If it finds any kind of error
-%             if strcmp('stats:gmdistribution:IllCondCovIter',ME.identifier)  % If it is a ill-conditioned covariance error
-%                 % Try without the training data set
-%                 artifact.GMM.GMM_distribution = fitgmdist(artifact.data_combined_artifact_free,number_clusters);
-%             end
-%         end
-% %         % Fitting trained data
-% %         artifact.GMM.GMM_distribution = fitgmdist(artifact.data_combined_artifact_free,number_clusters,...
-% %             'Start',Training_data.Trained_GMM);
-%         
-%         % Computing Posterior GMM Probability to each time bin
-%         [artifact.GMM.Prob.All,artifact.GMM.nlogL] = posterior(artifact.GMM.GMM_distribution,artifact.data_combined_artifact_free);
-%         
-%         clear tr_* fitted_GMM aux*
-%         
-%         % Get GMM parameters
-%         GMM.GMM_distribution = artifact.GMM.GMM_distribution;
-%         GMM.Prob.All = artifact.GMM.Prob.All;
-%         GMM.nlogL = artifact.GMM.nlogL;
-%         
-% %         GMM.GMM_distribution = fitgmdist(data_combined,number_clusters,...
-% %             'Start',Training_data.Trained_GMM);
-% %         
-% %         % Computing Posterior GMM.Probability to each time bin
-% %         [GMM.Prob.All,GMM.nlogL] = posterior(GMM.GMM_distribution,data_combined);        
-%         
-%         % Make sure that every single one of the 3 clusters has at least 1
-%         % period with posterior probabily higher than 0.5
-%         if ~isempty(find(GMM.Prob.All(:,1) > 0,1)) &&...
-%                 ~isempty(find(GMM.Prob.All(:,2) > 0,1)) &&...
-%                 ~isempty(find(GMM.Prob.All(:,3) > 0,1))
-%             break   % Terminate the execution of the current loop
-%         end
-%         
-%     end
-%     % Check if all the clusters have at least 1 epoch with posterior
-%     % probability higher than 90%. If it is not the case, if the user selected
-%     % the option to keep repeating the clustering, it will do 100 more
-%     % iterations
-%     if isempty(find(GMM.Prob.All(:,1)>.9,1)) || isempty(find(GMM.Prob.All(:,2)>.9,1)) || isempty(find(GMM.Prob.All(:,3)>.9,1))
-%         add_iterations_trigger = true;
-%     else
-%         add_iterations_trigger = false;
-%     end
-%     
-%     % Defining the GMM.Probability distribution for each state
-%     n_iterations = 89; % number of total iteration
-%     threshold_pos_prob = 0.9; % It will decrease 0.01 each iteration
-%     if add_iterations_trigger  % If it's necessary another set of iterations
-%         for ii = 1:n_iterations
-%             [artifact.GMM.Prob.All,artifact.GMM.nlogL] = posterior(artifact.GMM.GMM_distribution,artifact.data_combined_artifact_free);
-%             % Check if the clusterization was successful
-%             if ~isempty(find(GMM.Prob.All(:,1)>threshold_pos_prob,1)) && ~isempty(find(GMM.Prob.All(:,2)>threshold_pos_prob,1)) && ~isempty(find(GMM.Prob.All(:,3)>threshold_pos_prob,1))
-%                 succeeded = true;
-%                 break  % Stop the current loop to proceed
-%             else
-%                 threshold_pos_prob = threshold_pos_prob - 0.01;
-%                 succeeded = false;
-%             end
-%         end
-%         
-%         % After the loop has finished check if it was NOT succeeded and warn
-%         % the user about it. The function will also be finished
-%         if ~succeeded
-%             % Creates an alert informing the user
-%             fig_warning = uifigure;
-%             uialert(fig_warning,'It was not possible to cluster the epochs of your dataset into 3 separate groups (AWAKE, NREM, REM)','GMM Algorithm was not successful','CloseFcn',@(h,e) close(fig_warning));
-%             uiwait(fig_warning) % Wait until the warning is closed
-%             % Close the recording_app
-%             delete(app.Recording_app)
-%             % Finishes this function
-%             return
-%         end
-%     end
+    %     for gmm_loop = 1:1000
+    %
+    %         try
+    %             % Fitting trained data
+    %             artifact.GMM.GMM_distribution = fitgmdist(artifact.data_combined_artifact_free,number_clusters,...
+    %                 'Start',Training_data.Trained_GMM);
+    %         catch ME  % If it finds any kind of error
+    %             if strcmp('stats:gmdistribution:IllCondCovIter',ME.identifier)  % If it is a ill-conditioned covariance error
+    %                 % Try without the training data set
+    %                 artifact.GMM.GMM_distribution = fitgmdist(artifact.data_combined_artifact_free,number_clusters);
+    %             end
+    %         end
+    % %         % Fitting trained data
+    % %         artifact.GMM.GMM_distribution = fitgmdist(artifact.data_combined_artifact_free,number_clusters,...
+    % %             'Start',Training_data.Trained_GMM);
+    %
+    %         % Computing Posterior GMM Probability to each time bin
+    %         [artifact.GMM.Prob.All,artifact.GMM.nlogL] = posterior(artifact.GMM.GMM_distribution,artifact.data_combined_artifact_free);
+    %
+    %         clear tr_* fitted_GMM aux*
+    %
+    %         % Get GMM parameters
+    %         GMM.GMM_distribution = artifact.GMM.GMM_distribution;
+    %         GMM.Prob.All = artifact.GMM.Prob.All;
+    %         GMM.nlogL = artifact.GMM.nlogL;
+    %
+    % %         GMM.GMM_distribution = fitgmdist(data_combined,number_clusters,...
+    % %             'Start',Training_data.Trained_GMM);
+    % %
+    % %         % Computing Posterior GMM.Probability to each time bin
+    % %         [GMM.Prob.All,GMM.nlogL] = posterior(GMM.GMM_distribution,data_combined);
+    %
+    %         % Make sure that every single one of the 3 clusters has at least 1
+    %         % period with posterior probabily higher than 0.5
+    %         if ~isempty(find(GMM.Prob.All(:,1) > 0,1)) &&...
+    %                 ~isempty(find(GMM.Prob.All(:,2) > 0,1)) &&...
+    %                 ~isempty(find(GMM.Prob.All(:,3) > 0,1))
+    %             break   % Terminate the execution of the current loop
+    %         end
+    %
+    %     end
+    %     % Check if all the clusters have at least 1 epoch with posterior
+    %     % probability higher than 90%. If it is not the case, if the user selected
+    %     % the option to keep repeating the clustering, it will do 100 more
+    %     % iterations
+    %     if isempty(find(GMM.Prob.All(:,1)>.9,1)) || isempty(find(GMM.Prob.All(:,2)>.9,1)) || isempty(find(GMM.Prob.All(:,3)>.9,1))
+    %         add_iterations_trigger = true;
+    %     else
+    %         add_iterations_trigger = false;
+    %     end
+    %
+    %     % Defining the GMM.Probability distribution for each state
+    %     n_iterations = 89; % number of total iteration
+    %     threshold_pos_prob = 0.9; % It will decrease 0.01 each iteration
+    %     if add_iterations_trigger  % If it's necessary another set of iterations
+    %         for ii = 1:n_iterations
+    %             [artifact.GMM.Prob.All,artifact.GMM.nlogL] = posterior(artifact.GMM.GMM_distribution,artifact.data_combined_artifact_free);
+    %             % Check if the clusterization was successful
+    %             if ~isempty(find(GMM.Prob.All(:,1)>threshold_pos_prob,1)) && ~isempty(find(GMM.Prob.All(:,2)>threshold_pos_prob,1)) && ~isempty(find(GMM.Prob.All(:,3)>threshold_pos_prob,1))
+    %                 succeeded = true;
+    %                 break  % Stop the current loop to proceed
+    %             else
+    %                 threshold_pos_prob = threshold_pos_prob - 0.01;
+    %                 succeeded = false;
+    %             end
+    %         end
+    %
+    %         % After the loop has finished check if it was NOT succeeded and warn
+    %         % the user about it. The function will also be finished
+    %         if ~succeeded
+    %             % Creates an alert informing the user
+    %             fig_warning = uifigure;
+    %             uialert(fig_warning,'It was not possible to cluster the epochs of your dataset into 3 separate groups (AWAKE, NREM, REM)','GMM Algorithm was not successful','CloseFcn',@(h,e) close(fig_warning));
+    %             uiwait(fig_warning) % Wait until the warning is closed
+    %             % Close the recording_app
+    %             delete(app.Recording_app)
+    %             % Finishes this function
+    %             return
+    %         end
+    %     end
     % Até aqui
     
     % Get the new GMM results
@@ -1500,7 +1500,7 @@ if (check_point_info.status && ~check_point_info.gmm_clusters) || ~check_point_i
     status_text = 'FIGURE: GMM clusters with artifacts...';
     change_status_text(app.Recording_app,status_text);
     drawnow() % Update any changes
-        
+    
     f=figure('PaperSize', [21 29.7],'visible','off');
     subplot(334)
     aux_c=colorbar;
@@ -1548,20 +1548,22 @@ if (check_point_info.status && ~check_point_info.gmm_clusters) || ~check_point_i
     set(gca,'Linewidth',figure_parameters.lw)
     set(gca,'Tickdir','out')
     
-    subplot(338)
-    scatter(x,y,figure_parameters.scatter_size,GMM.Prob.All(:,3),'.');
-    hold on
-    scatter(x(artifact.LFP_epoch),y(artifact.LFP_epoch),figure_parameters.scatter_size,...
-        'm','x');
-    hold off
-    ylabel(label_y);
-    xlabel([figure_parameters.emg_accel ' (z-score)']);
-    xlim(figure_parameters.limx)
-    ylim(figure_parameters.limy)
-    title('Cluster 3')
-    set(gca,'fontsize',figure_parameters.fontsize)
-    set(gca,'Linewidth',figure_parameters.lw)
-    set(gca,'Tickdir','out')
+    if number_clusters >= 3
+        subplot(338)
+        scatter(x,y,figure_parameters.scatter_size,GMM.Prob.All(:,3),'.');
+        hold on
+        scatter(x(artifact.LFP_epoch),y(artifact.LFP_epoch),figure_parameters.scatter_size,...
+            'm','x');
+        hold off
+        ylabel(label_y);
+        xlabel([figure_parameters.emg_accel ' (z-score)']);
+        xlim(figure_parameters.limx)
+        ylim(figure_parameters.limy)
+        title('Cluster 3')
+        set(gca,'fontsize',figure_parameters.fontsize)
+        set(gca,'Linewidth',figure_parameters.lw)
+        set(gca,'Tickdir','out')
+    end
     
     subplot(333)
     scatter(artifact.x_artifact_free,artifact.y_artifact_free,figure_parameters.scatter_size,artifact.GMM.Prob.All(:,1),'.');
@@ -1585,16 +1587,19 @@ if (check_point_info.status && ~check_point_info.gmm_clusters) || ~check_point_i
     set(gca,'Linewidth',figure_parameters.lw)
     set(gca,'Tickdir','out')
     
-    subplot(339)
-    scatter(artifact.x_artifact_free,artifact.y_artifact_free,figure_parameters.scatter_size,artifact.GMM.Prob.All(:,3),'.');
-    xlim(figure_parameters.limx)
-    ylim(figure_parameters.limy)
-    yticklabels('')
-    xlabel([figure_parameters.emg_accel ' (z-score)']);
-    title('Cluster 3')
-    set(gca,'fontsize',figure_parameters.fontsize)
-    set(gca,'Linewidth',figure_parameters.lw)
-    set(gca,'Tickdir','out')
+    if number_clusters >= 3
+        
+        subplot(339)
+        scatter(artifact.x_artifact_free,artifact.y_artifact_free,figure_parameters.scatter_size,artifact.GMM.Prob.All(:,3),'.');
+        xlim(figure_parameters.limx)
+        ylim(figure_parameters.limy)
+        yticklabels('')
+        xlabel([figure_parameters.emg_accel ' (z-score)']);
+        title('Cluster 3')
+        set(gca,'fontsize',figure_parameters.fontsize)
+        set(gca,'Linewidth',figure_parameters.lw)
+        set(gca,'Tickdir','out')
+    end
     
     set(gcf,'color','white')
     set(f,'PaperPositionMode','auto')
@@ -1632,15 +1637,17 @@ if (check_point_info.status && ~check_point_info.gmm_clusters) || ~check_point_i
     set(gca,'Linewidth',figure_parameters.lw)
     set(gca,'Tickdir','out')
     
-    subplot(223)
-    scatter(x,y,figure_parameters.scatter_size,GMM.Prob.All(:,3),'.');
-    ylabel(label_y);
-    xlabel([figure_parameters.emg_accel ' (z-score)']);
-    xlim(figure_parameters.limx)
-    ylim(figure_parameters.limy)
-    set(gca,'fontsize',figure_parameters.fontsize)
-    set(gca,'Linewidth',figure_parameters.lw)
-    set(gca,'Tickdir','out')
+    if number_clusters >= 3
+        subplot(223)
+        scatter(x,y,figure_parameters.scatter_size,GMM.Prob.All(:,3),'.');
+        ylabel(label_y);
+        xlabel([figure_parameters.emg_accel ' (z-score)']);
+        xlim(figure_parameters.limx)
+        ylim(figure_parameters.limy)
+        set(gca,'fontsize',figure_parameters.fontsize)
+        set(gca,'Linewidth',figure_parameters.lw)
+        set(gca,'Tickdir','out')
+    end
     
     subplot(224)
     c=colorbar;
@@ -2246,7 +2253,7 @@ if (check_point_info.status && ~check_point_info.fix_data) || ~check_point_info.
     aux_WK_REM = intersect(aux_WK,aux_REM);
     aux_WK_NREM = intersect(aux_WK,aux_NREM);
     aux_all = intersect(aux_WK_NREM,aux_NREM_REM);
-        
+    
     % Fitting to highest probability cluster
     if isempty(cat(1,aux_WK_NREM,aux_NREM_REM,aux_WK_REM))
         status_text = 'No Epochs ambiguously sorted';
@@ -2381,12 +2388,12 @@ end
 % % Check if the check point option e enable and if this step has already
 % % been done
 % if (check_point_info.status && ~check_point_info.plot_ROC) || ~check_point_info.status
-%     
+%
 %     %Update status
 %     status_text = 'Plotting the ROC curve WITH THRESHOLD...';
 %     change_status_text(app.Recording_app,status_text);
 %     drawnow() % Update any changes
-%     
+%
 %     f=figure('PaperSize', [21 29.7],'visible','off');
 %     subplot(331)
 %     scatter(x,y,figure_parameters.scatter_size,GMM.Prob.AWAKE,'.');
@@ -2398,7 +2405,7 @@ end
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
 %     title('Posterior Probability:','FontSize',figure_parameters.fontsize*1.2)
-%     
+%
 %     subplot(334)
 %     scatter(x,y,figure_parameters.scatter_size,GMM.Prob.NREM,'.');
 %     ylabel(label_y);
@@ -2408,7 +2415,7 @@ end
 %     set(gca,'fontsize',figure_parameters.fontsize)
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
-%     
+%
 %     subplot(337)
 %     scatter(x,y,figure_parameters.scatter_size,GMM.Prob.REM,'.');
 %     ylabel(label_y);
@@ -2418,7 +2425,7 @@ end
 %     set(gca,'fontsize',figure_parameters.fontsize)
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
-%     
+%
 %     subplot(332)
 %     plot(GMM.All_Threshold.FP_AWK,GMM.All_Threshold.TP_AWK,'k','linewidth',figure_parameters.lw);
 %     colormap(jet)
@@ -2444,7 +2451,7 @@ end
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
 %     title({'Selecting threshold:','AWAKE'},'FontSize',figure_parameters.fontsize*1.2)
-%     
+%
 %     subplot(335)
 %     plot(GMM.All_Threshold.FP_SWS,GMM.All_Threshold.TP_SWS,'k','linewidth',1.5);
 %     colormap(jet)
@@ -2470,7 +2477,7 @@ end
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
 %     title({'NREM'},'FontSize',figure_parameters.fontsize*1.2)
-%     
+%
 %     subplot(338)
 %     plot(GMM.All_Threshold.FP_REM,GMM.All_Threshold.TP_REM,'k','linewidth',1.5);
 %     colormap(jet)
@@ -2496,7 +2503,7 @@ end
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
 %     title({'REM'},'FontSize',figure_parameters.fontsize*1.2)
-%     
+%
 %     subplot(333)
 %     scatter(x(GMM.All_Sort==3),y(GMM.All_Sort==3),figure_parameters.scatter_size,...
 %         figure_parameters.color.awake,'.');
@@ -2510,7 +2517,7 @@ end
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
 %     title({'Final Classification:','AWAKE'},'FontSize',figure_parameters.fontsize*1.2)
-%     
+%
 %     subplot(336)
 %     scatter(x(GMM.All_Sort==2),y(GMM.All_Sort==2),figure_parameters.scatter_size,...
 %         figure_parameters.color.nrem,'.');
@@ -2524,7 +2531,7 @@ end
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
 %     title({'NREM'},'FontSize',figure_parameters.fontsize*1.2)
-%     
+%
 %     subplot(339)
 %     scatter(x(GMM.All_Sort==1),y(GMM.All_Sort==1),figure_parameters.scatter_size,...
 %         figure_parameters.color.rem,'.');
@@ -2538,20 +2545,20 @@ end
 %     set(gca,'Linewidth',figure_parameters.lw)
 %     set(gca,'Tickdir','out')
 %     title({'REM'},'FontSize',figure_parameters.fontsize*1.2)
-%     
+%
 %     f.Renderer='Painters';
 %     set(gcf,'color','white')
 %     sgtitle(['Clusters Formation - ' recording_params.recording_group],'fontsize',figure_parameters.fontsize*2.2)
 %     print('-bestfit',fullfile(outputPath,'Clusters Formation'),'-dpdf','-r0',f)
-%     
+%
 %     close
 %     clear c s hobj h f
 % %     clear c s hobj h p* f
-%     
+%
 %     % Update the check and save it
 %     check_point_info.plot_ROC = true;
 %     save(fullfile(outputPath,'GMM_Classification.mat'),'check_point_info','-append')
-%     
+%
 % end
 
 %% Plotting the ROC curve WITH THRESHOLD
@@ -2808,7 +2815,7 @@ if (check_point_info.status && ~check_point_info.final_clusters) || ~check_point
     if ~isempty(find(GMM.All_Sort==5, 1))
         legend('AWAKE','NREM','REM','NREM<->REM','Location','best')
     else
-        legend('AWAKE','NREM','REM','Location','best')        
+        legend('AWAKE','NREM','REM','Location','best')
     end
     legend box off
     set(gca,'fontsize',figure_parameters.fontsize)
@@ -2865,17 +2872,17 @@ if (check_point_info.status && ~check_point_info.final_clusters) || ~check_point
     
 end
 
- %% Final Classification over time
-% 
+%% Final Classification over time
+%
 % % Check if the check point option e enable and if this step has already
 % % been done
 % if (check_point_info.status && ~check_point_info.final_class) || ~check_point_info.status
-%     
+%
 %     %Update status
 %     status_text = 'Final Clusters...';
 %     change_status_text(app.Recording_app,status_text);
 %     drawnow() % Update any changes
-%     
+%
 %     % Generating separated hypnogram
 %     aux_aw=zeros(size(GMM.All_Sort,1),1);
 %     aux_aw(GMM.All_Sort==3)=1;
@@ -2883,14 +2890,14 @@ end
 %     aux_sw(GMM.All_Sort==2)=1;
 %     aux_re=zeros(size(GMM.All_Sort,1),1);
 %     aux_re(GMM.All_Sort==1)=1;
-%     
+%
 %     % Frequency bands
 %     freq_aux_delta=zscore(LFP.Frequency_bands.Delta)';
 %     freq_aux_theta=zscore(LFP.Frequency_bands.Theta)';
 %     freq_aux_beta=zscore(LFP.Frequency_bands.Beta)';
 %     freq_aux_low_gamma=zscore(LFP.Frequency_bands.Low_Gamma)';
 %     freq_aux_high_gamma=zscore(LFP.Frequency_bands.High_Gamma)';
-%     
+%
 %     f2=figure('PaperSize', [21 29.7],'visible','off');
 %     for jj=1:figure_parameters.figure_over_time
 %         subplot(2,1,1)
@@ -2917,7 +2924,7 @@ end
 %         set(gca,'fontsize',figure_parameters.fontsize)
 %         set(gca,'Linewidth',figure_parameters.lw)
 %         set(gca,'Tickdir','out')
-%         
+%
 %         if figure_parameters.figure_over_time==2
 %             subplot(2,1,2)
 %             plot(smooth(freq_aux_delta(end/2:end),figure_parameters.smoothing_value),'linewidth',figure_parameters.lw)
@@ -2941,18 +2948,18 @@ end
 %             set(gca,'Tickdir','out')
 %         end
 %     end
-%     
+%
 %     set(gcf,'color',[1 1 1]);
 %     sgtitle(['Final Classification over time - ' recording_params.recording_group],'fontsize',figure_parameters.fontsize*2.2)
 %     print('-bestfit',fullfile(outputPath,'Final Classification over time'),'-dpdf','-r0',f2)
-%     
+%
 %     close
 %     clear f2 jj hl hobj aux*
-%     
+%
 %     % Update the check and save it
 %     check_point_info.final_class = true;
 %     save(fullfile(outputPath,'GMM_Classification.mat'),'check_point_info','-append')
-%     
+%
 % end
 
 
@@ -2995,7 +3002,7 @@ if (check_point_info.status && ~check_point_info.final_class) || ~check_point_in
         box off
         ylim([-3 11])
         yticks([mean(x) mean(y+3) 6 7 8])
-%         yticks([mean(x) mean(y+3) mean(aux_re+5,'omitnan') mean(aux_sw+6,'omitnan') mean(aux_aw+7,'omitnan')])
+        %         yticks([mean(x) mean(y+3) mean(aux_re+5,'omitnan') mean(aux_sw+6,'omitnan') mean(aux_aw+7,'omitnan')])
         yticklabels({[figure_parameters.emg_accel, ' (z-score)'],label_y,'REM','NREM','AWAKE'})
         if figure_parameters.figure_over_time==2
             xlim([1 size(x,1)/figure_parameters.figure_over_time])
@@ -3003,7 +3010,7 @@ if (check_point_info.status && ~check_point_info.final_class) || ~check_point_in
                 size(x,1)/figure_parameters.figure_over_time size(x,1)/figure_parameters.figure_over_time])
             xticklabels(figure_parameters.time_vector(1:end/figure_parameters.figure_over_time+1));
         else
-            xlim([1 size(x,1)])         
+            xlim([1 size(x,1)])
             xticks(round(linspace(1,size(x,1),size(figure_parameters.time_vector,1))))
             xticklabels(figure_parameters.time_vector(1:end));
         end
@@ -3224,7 +3231,7 @@ if (check_point_info.status && ~check_point_info.plot_comparison) || ~check_poin
     if ~isempty(find(GMM.All_Sort==5, 1))
         legend('AWAKE','NREM','REM','NREM<->REM','Location','best')
     else
-        legend('AWAKE','NREM','REM','Location','best')        
+        legend('AWAKE','NREM','REM','Location','best')
     end
     legend box off
     set(gca,'fontsize',figure_parameters.fontsize)
@@ -3283,7 +3290,7 @@ if (check_point_info.status && ~check_point_info.plot_comparison) || ~check_poin
     if ~isempty(find(GMM.All_Sort==5, 1))
         legend('AWAKE','NREM','REM','NREM<->REM','Location','best')
     else
-        legend('AWAKE','NREM','REM','Location','best')        
+        legend('AWAKE','NREM','REM','Location','best')
     end
     legend box off
     set(gca,'fontsize',figure_parameters.fontsize)

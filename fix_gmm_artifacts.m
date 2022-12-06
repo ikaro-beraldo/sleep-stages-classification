@@ -8,7 +8,7 @@ if isempty(artifact.LFP_epoch)
 end
 
 % Pre-allocate the new GMM.Prob.All matrix
-GMM_prob_all = zeros(length(x),number_clusters);
+% GMM_prob_all = zeros(length(x),number_clusters);
 
 %% Define the segments
 

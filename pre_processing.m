@@ -220,49 +220,80 @@ if pre_processing_state  % If it is true, the pre-processing step is going to be
 %         end        
     end
     toc
-   
-    %% 6th --> Blocking Filtered Data
-    tic
-    n=pre_pro_params.epoch_length*DATA.LFP_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
     
-    % Number of blocks in each segment
-    n_blocks_each_segment = floor(size(DATA.LFP_hour,2) / n);
+    %% 6th --> Blocking Filtered Data (Faster and Matching the RAW data size)
+    n=pre_pro_params.epoch_length*DATA.LFP_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+    % Total number of blocks
+    n_blocks = floor(numel(DATA.LFP_hour) / n);
     % LFP
-    DATA.LFP_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix (N blocks in each segment * N of segments)
-    segment_counter = 0;
-    for segments = segmentation_info.segments % Segments loop
-        for i = 1:n_blocks_each_segment  % Blocks loop
-            a = 1+(i-1)*n;
-            b = i*n;
-            DATA.LFP_epochs(i+segment_counter,:) = DATA.LFP_hour(segments,a:b);
-        end
-        segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
-    end
-    % Exclude extra NaN values
-    DATA.LFP_epochs(isnan(DATA.LFP_epochs(:,1)),:) = [];
+    % Eliminate the extra samples
+    DATA.LFP_epochs = reshape(DATA.LFP_hour',1,[]);
+    DATA.LFP_epochs(n*n_blocks + 1:end) = [];
+    % Reshape the LFP hour (Break into n sample blocks)
+    DATA.LFP_epochs = reshape(DATA.LFP_epochs,n,n_blocks)';
     DATA = rmfield(DATA,'LFP_hour');  % Remove the field LFP_epochs
     
     % EMG
     n=pre_pro_params.epoch_length*DATA.EMG_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
-    % Number of blocks in each segment
-    n_blocks_each_segment = floor(size(DATA.EMG_hour,2) / n);
+    % Total number of blocks
+    n_blocks = floor(numel(DATA.EMG_hour) / n);
     % EMG
-    DATA.EMG_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix
-    segment_counter = 0;
-    for segments = segmentation_info.segments % Segments loop
-        for i = 1:n_blocks_each_segment  % Blocks loop
-            a = 1+(i-1)*n;
-            b = i*n;
-            DATA.EMG_epochs(i+segment_counter,:) = DATA.EMG_hour(segments,a:b);
-        end
-        segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
-    end
-    % Exclude extra NaN values
-    DATA.EMG_epochs(isnan(DATA.EMG_epochs(:,1)),:) = [];
+    % Eliminate the extra samples
+    DATA.EMG_epochs = reshape(DATA.EMG_hour',1,[]);
+    DATA.EMG_epochs(n*n_blocks + 1:end) = [];
+    % Reshape the EMG hour (Break into n sample blocks)
+    DATA.EMG_epochs = reshape(DATA.EMG_epochs,n,n_blocks)';
     DATA = rmfield(DATA,'EMG_hour');  % Remove the field LFP_epochs
+    
+    % Add a final block by block detrend
+    DATA.LFP_epochs = detrend(DATA.LFP_epochs','constant')';
+    DATA.EMG_epochs = detrend(DATA.EMG_epochs','constant')';
     
     clear a b i m n segment_counter n_blocks_each_segment
     toc
+   
+%     %% 6th --> Blocking Filtered Data
+%     tic
+%     n=pre_pro_params.epoch_length*DATA.LFP_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+%     
+%     % Number of blocks in each segment
+%     n_blocks_each_segment = floor(size(DATA.LFP_hour,2) / n);
+%     % LFP
+%     DATA.LFP_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix (N blocks in each segment * N of segments)
+%     segment_counter = 0;
+%     for segments = segmentation_info.segments % Segments loop
+%         for i = 1:n_blocks_each_segment  % Blocks loop
+%             a = 1+(i-1)*n;
+%             b = i*n;
+%             DATA.LFP_epochs(i+segment_counter,:) = DATA.LFP_hour(segments,a:b);
+%         end
+%         segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
+%     end
+%     % Exclude extra NaN values
+%     DATA.LFP_epochs(isnan(DATA.LFP_epochs(:,1)),:) = [];
+%     DATA = rmfield(DATA,'LFP_hour');  % Remove the field LFP_epochs
+%     
+%     % EMG
+%     n=pre_pro_params.epoch_length*DATA.EMG_processed_sampling_frequency; % time bins (seconds x Fs) --> epoch length in seconds
+%     % Number of blocks in each segment
+%     n_blocks_each_segment = floor(size(DATA.EMG_hour,2) / n);
+%     % EMG
+%     DATA.EMG_epochs = nan(n_blocks_each_segment*segmentation_info.n_segments,n); % preallocating the final matrix
+%     segment_counter = 0;
+%     for segments = segmentation_info.segments % Segments loop
+%         for i = 1:n_blocks_each_segment  % Blocks loop
+%             a = 1+(i-1)*n;
+%             b = i*n;
+%             DATA.EMG_epochs(i+segment_counter,:) = DATA.EMG_hour(segments,a:b);
+%         end
+%         segment_counter = segment_counter + n_blocks_each_segment;  % Sum the previous blocked data
+%     end
+%     % Exclude extra NaN values
+%     DATA.EMG_epochs(isnan(DATA.EMG_epochs(:,1)),:) = [];
+%     DATA = rmfield(DATA,'EMG_hour');  % Remove the field LFP_epochs
+%     
+%     clear a b i m n segment_counter n_blocks_each_segment
+%     toc
 else % If the pre processing step has already been done before
     
     % Check if the data has been pre-processed by the alternative
