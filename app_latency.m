@@ -1,5 +1,10 @@
 %% Get latency to nREM and REM sleep - Mininum 20 seconds or 2 blocks of 10 seconds
 
+% All_Sort = vector with classification code (WK = 3; NREM = 2; REM = 1
+% Epoch length = epoch length in seconds (ex: 10 or 30)
+% Segment length in hours (0 = whole data; scalar (~0) = segment length in
+% hours; matrix = segments timestamps [beginning end; beginning end...]
+
 function latency = app_latency(All_Sort,epoch_length,segment_length)
 
 % Define some important parameters

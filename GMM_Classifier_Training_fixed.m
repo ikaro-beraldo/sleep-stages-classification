@@ -2365,7 +2365,28 @@ if (check_point_info.status && ~check_point_info.redefine_gmm) || ~check_point_i
     GMM.All_Sort(GMM_REM_All_Sort==1) = 1;
     GMM.All_Sort(GMM_Transition_NREM_REM==1) = 5;
     
-    clear GMM_WK_All_Sort GMM_NREM_All_Sort GMM_REM_All_Sort
+    %% Fix REM-NREM inconsistencies
+    
+    % Get REM and NREM indices
+    REM = find(GMM.All_Sort == 1);
+    NREM = find(GMM.All_Sort == 2);
+    
+    td = LFP.Frequency_bands.Theta./LFP.Frequency_bands.Delta;  % Theta Delta
+    max_NREM = max(td(NREM));                                   % Max NREM TD value
+    
+    rem_lower = find(td(REM) <= max_NREM);                      % Find REM values higher than max NREM TD value
+    chg_epochs = REM(rem_lower);
+    
+    % Fix the classification
+    
+    GMM.All_Sort(chg_epochs) = 2;
+    
+    % hold on
+    % plot(EMG.RMS(GMM.All_Sort==3),td(GMM.All_Sort==3),'.','Color','y')
+    % plot(EMG.RMS(GMM.All_Sort==2),td(GMM.All_Sort==2),'.','Color','b')
+    % plot(EMG.RMS(GMM.All_Sort==1),td(GMM.All_Sort==1),'.','Color','g')
+    
+    clear GMM_WK_All_Sort GMM_NREM_All_Sort GMM_REM_All_Sort REM NREM chg_epochs td max_NREM
     
     %% Computing AUC
     

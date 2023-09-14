@@ -99,7 +99,7 @@ clear min_exclude max_exclude
 
 artifact.previously_detected = find(isnan(DATA.LFP_epochs(:,1)));
 
-%% Artifact detection
+%% Artifact detection - by amplitude
 
 % Threshold selected as SD in amplitude
 artifact.threshold_lfp = amplitude_threshold;
@@ -116,6 +116,18 @@ artifact.LFP_epoch_std = std(DATA.LFP_epochs,[],2);
 [artifact.amplitude_superior,~,~] = find(DATA.LFP_epochs >= artifact.LFP_epoch_std * artifact.threshold_lfp);
 [artifact.amplitude_inferior,~,~] = find(DATA.LFP_epochs <= artifact.LFP_epoch_std * -artifact.threshold_lfp);
 artifact.amplitude = unique([artifact.amplitude_superior; artifact.amplitude_inferior]);
+
+%% Define amplitude threshold for each band frequency
+
+% band_artifact.Theta = find(zscore(LFP.Frequency_bands.Theta) < -2);
+% band_artifact.Delta = find(zscore(LFP.Frequency_bands.Delta) > 2);
+% band_artifact.Beta = find(zscore(LFP.Frequency_bands.Beta) < -2.5);
+% band_artifact.High_Gamma = find(zscore(LFP.Frequency_bands.High_Gamma) < -0.5);
+% band_artifact.Low_Gamma = find(zscore(LFP.Frequency_bands.Low_Gamma) < -2);
+% 
+% % Final artifact
+% band_artifact.unique = unique([band_artifact.Theta band_artifact.Beta band_artifact.Delta band_artifact.High_Gamma band_artifact.Low_Gamma]);
+% artifact.band = band_artifact.unique';
 
 %% Computing net noise
 
